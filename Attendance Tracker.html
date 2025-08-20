@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance Tracker</title>
+    <meta name="theme-color" content="#22c55e"/> <!-- Green theme color for PWA -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .modal {
+            transition: opacity 0.3s ease;
+        }
+        /* Simple spinner for loading state */
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: #09f;
+            animation: spin 1s ease infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <!-- App Loading State -->
+    <div id="app-loading" class="flex flex-col items-center justify-center h-screen">
+        <div class="spinner"></div>
+        <p class="mt-4 text-lg text-gray-600">Initializing App...</p>
+    </div>
+
+    <!-- Main App Content (hidden by default) -->
+    <div id="app-container" class="hidden">
+        <!-- Stationary Header -->
+        <header class="sticky top-0 z-50 bg-green-600 shadow-lg">
+            <div class="container mx-auto relative flex items-center justify-center text-center py-4 px-4 sm:px-6 lg:px-8">
+                <!-- Logo and School Name on the left -->
+                <div class="absolute left-4 sm:left-6 lg:left-8 flex items-center space-x-3">
+                    <!-- IMPORTANT: Replace src with your logo URL -->
+                    <img src="ONH_LOGO_NEW.PNG" alt="School Logo" class="h-12 w-12 rounded-full border-2 border-white">
+                    <!-- IMPORTANT: Replace with your school name -->
+                    <span class="text-xl font-bold text-white hidden md:block">OVAL NORTH HIGH</span>
+                </div>
+            
+                <!-- Centered Title -->
+                <div>
+                    <h1 class="text-3xl sm:text-4xl font-bold text-white">Learner Attendance Tracker</h1>
+                    <p id="classDetailsHeader" class="text-md text-green-100 mt-2">
+                        <span id="displaySubjectName">[Subject]</span> | <span id="displayClassName">[Class]</span> | <span id="displayTeacherName">[Teacher]</span>
+                    </p>
+                </div>
+            </div>
+        </header>
+
+        <main class="container mx-auto p-4 sm:p-6 lg:p-8">
+            <!-- Class Details Section -->
+            <div class="bg-white p-6 rounded-xl shadow-md mb-8 max-w-2xl mx-auto">
+                <h2 class="text-2xl font-semibold mb-4">Class Details</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label for="teacherName" class="block text-sm font-medium text-gray-700">Teacher Name</label>
+                        <input type="text" id="teacherName" placeholder="e.g., Mr. Smith" class="mt-1 block w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 transition">
+                    </div>
+                    <div>
+                        <label for="className" class="block text-sm font-medium text-gray-700">Class Name</label>
+                        <input type="text" id="className" placeholder="e.g., Grade 10B" class="mt-1 block w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 transition">
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label for="subjectName" class="block text-sm font-medium text-gray-700">Subject Name</label>
+                        <input type="text" id="subjectName" placeholder="e.g., Mathematics" class="mt-1 block w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 transition">
+                    </div>
+                </div>
+                <div class="mt-6 text-right">
+                    <button id="saveDetailsBtn" class="bg-blue-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-300">
+                        Save Details
+                    </button>
+                </div>
+            </div>
+
+            <!-- Reports Section -->
+            <div class="bg-white p-6 rounded-xl shadow-md mb-8 max-w-2xl mx-auto">
+                <h2 class="text-2xl font-semibold mb-4">Download Reports</h2>
+                <div class="flex flex-col sm:flex-row items-center gap-4">
+                    <label for="reportMonth" class="font-medium">Select Month:</label>
+                    <input type="month" id="reportMonth" class="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 transition">
+                    <button id="downloadReportBtn" class="bg-emerald-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition duration-300">
+                        Download Report
+                    </button>
+                </div>
+            </div>
+
+            <!-- Section to Add New Learner -->
+            <div class="bg-white p-6 rounded-xl shadow-md mb-8 max-w-2xl mx-auto">
+                <h2 class="text-2xl font-semibold mb-4">Add a New Learner</h2>
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <input type="text" id="learnerName" placeholder="Enter learner's full name" class="flex-grow p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
+                    <button id="addLearnerBtn" class="bg-indigo-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-300 ease-in-out transform hover:-translate-y-1">
+                        Add Learner
+                    </button>
+                </div>
+            </div>
+
+            <!-- Bulk Upload Section -->
+            <div class="bg-white p-6 rounded-xl shadow-md mb-8 max-w-2xl mx-auto">
+                <h2 class="text-2xl font-semibold mb-4">Bulk Upload Learners</h2>
+                <p class="text-sm text-gray-600 mb-4">
+                    Instructions: Create a CSV file (or save an Excel sheet as CSV) with a single column containing the full names of your learners, one name per row.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <input type="file" id="csvFileInput" accept=".csv" class="flex-grow p-2 border border-gray-300 rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                    <button id="bulkAddBtn" class="bg-teal-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 transition duration-300">
+                        Upload CSV
+                    </button>
+                </div>
+            </div>
+
+            <!-- Date Picker -->
+            <div class="bg-white p-6 rounded-xl shadow-md mb-8 max-w-2xl mx-auto flex items-center justify-center gap-4">
+                 <h2 class="text-2xl font-semibold">Date:</h2>
+                 <input type="date" id="attendanceDate" class="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
+            </div>
+
+            <!-- Learners List -->
+            <div id="learnersList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Learner cards will be dynamically inserted here -->
+            </div>
+             <div id="loading" class="text-center hidden">
+                <p class="text-lg text-gray-600">Loading learners...</p>
+            </div>
+        </main>
+        
+        <!-- Modal for viewing attendance history -->
+        <div id="historyModal" class="modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 p-4">
+            <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-full overflow-y-auto">
+                <div class="p-6 border-b border-gray-200 sticky top-0 bg-white">
+                    <h3 id="modalTitle" class="text-2xl font-bold">Attendance History</h3>
+                    <button id="closeModalBtn" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-3xl">&times;</button>
+                </div>
+                <div id="modalBody" class="p-6">
+                    <!-- History will be loaded here -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Generic Message/Confirmation Modal -->
+        <div id="messageModal" class="modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 p-4">
+            <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm">
+                <div class="p-6 text-center">
+                    <p id="messageText" class="text-lg mb-6"></p>
+                    <div id="messageActions" class="flex justify-center gap-4">
+                        <button id="messageOkBtn" class="bg-indigo-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-indigo-700">OK</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Attendance Note Modal -->
+        <div id="noteModal" class="modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 p-4">
+            <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm">
+                <div class="p-6">
+                    <h3 id="noteModalTitle" class="text-xl font-bold mb-4">Add Note</h3>
+                    <textarea id="attendanceNoteInput" class="w-full p-2 border border-gray-300 rounded-lg" rows="3" placeholder="Optional note... (e.g., Sick, Doctor's appointment)"></textarea>
+                    <div class="mt-4 flex justify-end gap-4">
+                        <button id="cancelNoteBtn" class="bg-gray-300 text-gray-800 font-semibold py-2 px-6 rounded-lg hover:bg-gray-400">Cancel</button>
+                        <button id="saveNoteBtn" class="bg-green-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-green-700">Save</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // --- PWA Setup: Manifest and Service Worker ---
+
+        // 1. Dynamically create and inject the Web App Manifest
+        const manifest = {
+            "name": "Attendance Tracker",
+            "short_name": "Attendance",
+            "start_url": ".",
+            "display": "standalone",
+            "background_color": "#f3f4f6",
+            "theme_color": "#22c55e", // Green theme color
+            "description": "A simple app to track learner attendance.",
+            "icons": [
+                {
+                    "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2ZmZmZmZiI+PHBhdGggZD0iTTE3IDEySDEyVjE3SDE3VjEyWk0xNiAxVjNIOFYxSDZWM0g1QzMuODkgMyAzLjAxIDMuOSAzLjAxIDVMMiAxOUMyIDIwLjEgMi45IDIxIDQgMjFIMjBDMjEuMSAyMSAyMiAyMC4xIDIyIDE5VjVDMjIgMy45IDIxLjEgMyAyMCAzSDE4VjFIMTZaTTIwIDE5SDVWOEgyMFYxOVoiLz48L3N2Zz4=",
+                    "sizes": "192x192",
+                    "type": "image/svg+xml",
+                    "purpose": "any"
+                },
+                {
+                    "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2ZmZmZmZiI+PHBhdGggZD0iTTE3IDEySDEyVjE3SDE3VjEyWk0xNiAxVjNIOFYxSDZWM0g1QzMuODkgMyAzLjAxIDMuOSAzLjAxIDVMMiAxOUMyIDIwLjEgMi45IDIxIDQgMjFIMjBDMjEuMSAyMSAyMiAyMC4xIDIyIDE5VjVDMjIgMy45IDIxLjEgMyAyMCAzSDE4VjFIMTZaTTIwIDE5SDVWOEgyMFYxOVoiLz48L3N2Zz4=",
+                    "sizes": "512x512",
+                    "type": "image/svg+xml",
+                    "purpose": "any"
+                }
+            ]
+        };
+        const manifestBlob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+        const manifestUrl = URL.createObjectURL(manifestBlob);
+        const linkEl = document.createElement('link');
+        linkEl.rel = 'manifest';
+        linkEl.href = manifestUrl;
+        document.head.appendChild(linkEl);
+
+
+        // 2. Define and register the Service Worker
+        const serviceWorkerCode = `
+            const CACHE_NAME = 'attendance-tracker-cache-v1';
+            const urlsToCache = [
+                '/',
+                'https://cdn.tailwindcss.com',
+                'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap'
+            ];
+
+            self.addEventListener('install', event => {
+                event.waitUntil(
+                    caches.open(CACHE_NAME)
+                        .then(cache => {
+                            console.log('Opened cache');
+                            return cache.addAll(urlsToCache);
+                        })
+                );
+            });
+
+            self.addEventListener('fetch', event => {
+                event.respondWith(
+                    caches.match(event.request)
+                        .then(response => {
+                            if (response) { return response; }
+                            return fetch(event.request);
+                        })
+                );
+            });
+        `;
+        const swBlob = new Blob([serviceWorkerCode], { type: 'application/javascript' });
+        const swUrl = URL.createObjectURL(swBlob);
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register(swUrl)
+                    .then(reg => console.log('ServiceWorker registration successful'))
+                    .catch(err => console.log('ServiceWorker registration failed: ', err));
+            });
+        }
+
+
+        // --- Firebase Imports ---
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, collection, addDoc, onSnapshot, setDoc, getDoc, deleteDoc, query, where, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- Firebase Configuration ---
+        const firebaseConfig = {
+        apiKey: "AIzaSyDaySiKZA6PrEgpxBw-v2pngSSBwYZpqUY",
+        authDomain: "attendance-tracker-825cc.firebaseapp.com",
+        projectId: "attendance-tracker-825cc",
+        storageBucket: "attendance-tracker-825cc.firebasestorage.app",
+        messagingSenderId: "539619569987",
+        appId: "1:539619569987:web:15e9e25a8a7db639d63ff6",
+        measurementId: "G-PQZBDQN0GL"
+        };
+        // --- App ID ---
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-attendance-app';
+
+        // --- Firebase Initialization ---
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let userId = null;
+
+        // --- UI Elements ---
+        const appLoading = document.getElementById('app-loading');
+        const appContainer = document.getElementById('app-container');
+        const teacherNameInput = document.getElementById('teacherName');
+        const classNameInput = document.getElementById('className');
+        const subjectNameInput = document.getElementById('subjectName');
+        const saveDetailsBtn = document.getElementById('saveDetailsBtn');
+        const displayTeacherName = document.getElementById('displayTeacherName');
+        const displayClassName = document.getElementById('displayClassName');
+        const displaySubjectName = document.getElementById('displaySubjectName');
+        const addLearnerBtn = document.getElementById('addLearnerBtn');
+        const learnerNameInput = document.getElementById('learnerName');
+        const learnersList = document.getElementById('learnersList');
+        const attendanceDate = document.getElementById('attendanceDate');
+        const historyModal = document.getElementById('historyModal');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalBody = document.getElementById('modalBody');
+        const loading = document.getElementById('loading');
+        const csvFileInput = document.getElementById('csvFileInput');
+        const bulkAddBtn = document.getElementById('bulkAddBtn');
+        const messageModal = document.getElementById('messageModal');
+        const messageText = document.getElementById('messageText');
+        const messageActions = document.getElementById('messageActions');
+        const noteModal = document.getElementById('noteModal');
+        const noteModalTitle = document.getElementById('noteModalTitle');
+        const attendanceNoteInput = document.getElementById('attendanceNoteInput');
+        const cancelNoteBtn = document.getElementById('cancelNoteBtn');
+        const saveNoteBtn = document.getElementById('saveNoteBtn');
+        const reportMonthInput = document.getElementById('reportMonth');
+        const downloadReportBtn = document.getElementById('downloadReportBtn');
+
+
+        // --- Authentication ---
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                userId = user.uid;
+                appLoading.classList.add('hidden');
+                appContainer.classList.remove('hidden');
+                loadClassDetails();
+                loadLearners();
+            } else {
+                 try {
+                    if (typeof __firebase_config !== 'undefined' && typeof __initial_auth_token !== 'undefined') {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                } catch (error) {
+                    console.error("Error signing in:", error);
+                    appLoading.innerHTML = '<p class="text-red-500">Could not connect to the database. Please check your connection and refresh.</p>';
+                }
+            }
+        });
+
+
+        // --- Date Handling ---
+        function getFormattedDate(dateObj) {
+            const year = dateObj.getFullYear();
+            const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const day = String(dateObj.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+        attendanceDate.value = getFormattedDate(new Date());
+        reportMonthInput.value = new Date().toISOString().slice(0, 7);
+        attendanceDate.addEventListener('change', loadLearners);
+
+
+        // --- Firestore Logic ---
+        function getLearnersCollection() {
+            if (!userId) return null;
+            return collection(db, `/artifacts/${appId}/users/${userId}/learners`);
+        }
+        
+        function getAttendanceCollection() {
+             if (!userId) return null;
+            return collection(db, `/artifacts/${appId}/users/${userId}/attendance`);
+        }
+
+        function getClassDetailsDoc() {
+            if (!userId) return null;
+            return doc(db, `/artifacts/${appId}/users/${userId}/settings/classDetails`);
+        }
+
+        async function saveClassDetails() {
+            const detailsDoc = getClassDetailsDoc();
+            if (!detailsDoc) return;
+            const details = {
+                teacherName: teacherNameInput.value.trim(),
+                className: classNameInput.value.trim(),
+                subjectName: subjectNameInput.value.trim(),
+            };
+            try {
+                await setDoc(detailsDoc, details);
+                showMessage("Class details saved successfully!");
+            } catch (error) {
+                console.error("Error saving class details: ", error);
+                showMessage("Failed to save class details.");
+            }
+        }
+
+        function loadClassDetails() {
+            const detailsDoc = getClassDetailsDoc();
+            if (!detailsDoc) return;
+            onSnapshot(detailsDoc, (doc) => {
+                const details = doc.exists() ? doc.data() : {};
+                teacherNameInput.value = details.teacherName || '';
+                classNameInput.value = details.className || '';
+                subjectNameInput.value = details.subjectName || '';
+                displayTeacherName.textContent = details.teacherName || '[Teacher]';
+                displayClassName.textContent = details.className || '[Class]';
+                displaySubjectName.textContent = details.subjectName || '[Subject]';
+            });
+        }
+
+        async function addLearner() {
+            const learnerName = learnerNameInput.value.trim();
+            if (learnerName === '') {
+                showMessage("Learner name cannot be empty.");
+                return;
+            }
+            const learnersCol = getLearnersCollection();
+            if (!learnersCol) return;
+            try {
+                await addDoc(learnersCol, { name: learnerName, createdAt: new Date() });
+                learnerNameInput.value = '';
+            } catch (error) {
+                console.error("Error adding learner: ", error);
+                showMessage("Error adding learner.");
+            }
+        }
+
+        async function bulkAddLearners(names) {
+            if (!names || names.length === 0) {
+                showMessage("No valid names found in the file.");
+                return;
+            }
+            const learnersCol = getLearnersCollection();
+            if (!learnersCol) return;
+
+            const batch = writeBatch(db);
+            names.forEach(name => {
+                const docRef = doc(learnersCol); 
+                batch.set(docRef, { name: name, createdAt: new Date() });
+            });
+            
+            try {
+                await batch.commit();
+                showMessage(`Successfully added ${names.length} new learners.`);
+                csvFileInput.value = '';
+            } catch (error) {
+                console.error("Error bulk adding learners: ", error);
+                showMessage(`An error occurred during the bulk upload.`);
+            }
+        }
+
+        function loadLearners() {
+            const learnersCol = getLearnersCollection();
+            if (!learnersCol) return;
+            loading.classList.remove('hidden');
+            learnersList.innerHTML = '';
+
+            onSnapshot(learnersCol, (snapshot) => {
+                if (snapshot.empty) {
+                    learnersList.innerHTML = '<p class="text-center col-span-full text-gray-500">No learners added yet.</p>';
+                    loading.classList.add('hidden');
+                    return;
+                }
+                const learners = [];
+                snapshot.forEach(doc => learners.push({ id: doc.id, ...doc.data() }));
+                learners.sort((a, b) => a.name.localeCompare(b.name));
+                learnersList.innerHTML = '';
+                learners.forEach(learner => createLearnerCard(learner));
+                loading.classList.add('hidden');
+            });
+        }
+
+        async function createLearnerCard(learner) {
+            const card = document.createElement('div');
+            card.className = 'bg-white p-5 rounded-xl shadow-lg flex flex-col space-y-4';
+            card.setAttribute('data-id', learner.id);
+            const attendance = await getAttendanceForDate(learner.id, attendanceDate.value);
+            const status = attendance ? attendance.status : 'Not Marked';
+            const note = attendance ? attendance.note : '';
+            card.innerHTML = `
+                <div class="flex-grow">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-xl font-bold text-gray-900">${learner.name}</h3>
+                        ${note ? '<span title="Has note" class="text-blue-500">📝</span>' : ''}
+                    </div>
+                    <p class="text-sm text-gray-500">Status: <span class="font-semibold status-text">${status}</span></p>
+                </div>
+                <div class="flex flex-wrap gap-2 justify-center">
+                    <button class="status-btn flex-1 bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition" data-status="Present">Present</button>
+                    <button class="status-btn flex-1 bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition" data-status="Absent">Absent</button>
+                    <button class="status-btn flex-1 bg-yellow-500 text-white px-4 py-2 rounded-md hover:bg-yellow-600 transition" data-status="Late">Late</button>
+                </div>
+                <div class="pt-2 border-t border-gray-200 mt-4 flex justify-between items-center">
+                     <button class="view-history-btn text-sm text-indigo-600 hover:underline">View History</button>
+                     <button class="delete-learner-btn text-sm text-red-600 hover:underline">Delete</button>
+                </div>`;
+            updateCardAppearance(card, status);
+            learnersList.appendChild(card);
+        }
+        
+        function updateCardAppearance(card, status) {
+            const statusText = card.querySelector('.status-text');
+            statusText.textContent = status;
+            card.classList.remove('border-green-500', 'border-red-500', 'border-yellow-500', 'border-gray-200', 'border-2');
+            statusText.classList.remove('text-green-600', 'text-red-600', 'text-yellow-600', 'text-gray-500');
+            switch(status) {
+                case 'Present': card.classList.add('border-2', 'border-green-500'); statusText.classList.add('text-green-600'); break;
+                case 'Absent': card.classList.add('border-2', 'border-red-500'); statusText.classList.add('text-red-600'); break;
+                case 'Late': card.classList.add('border-2', 'border-yellow-500'); statusText.classList.add('text-yellow-600'); break;
+                default: card.classList.add('border-2', 'border-gray-200'); statusText.classList.add('text-gray-500');
+            }
+        }
+
+        async function getAttendanceForDate(learnerId, date) {
+            const attendanceCol = getAttendanceCollection();
+            if (!attendanceCol) return null;
+            const attendanceId = `${learnerId}_${date}`;
+            const docRef = doc(attendanceCol, attendanceId);
+            const docSnap = await getDoc(docRef);
+            return docSnap.exists() ? {id: docSnap.id, ...docSnap.data()} : null;
+        }
+
+        async function setAttendance(learnerId, status, date, note = '') {
+             const attendanceCol = getAttendanceCollection();
+             if (!attendanceCol) return;
+            const attendanceId = `${learnerId}_${date}`;
+            const docRef = doc(attendanceCol, attendanceId);
+            try {
+                await setDoc(docRef, { learnerId, date, status, note, updatedAt: new Date() });
+                loadLearners(); // Refresh to show note icon
+            } catch (error) {
+                console.error("Error setting attendance: ", error);
+            }
+        }
+        
+        async function deleteLearner(learnerId) {
+            const learnersCol = getLearnersCollection();
+            if (!learnersCol) return;
+            try {
+                await deleteDoc(doc(learnersCol, learnerId));
+                const attendanceCol = getAttendanceCollection();
+                const q = query(attendanceCol, where("learnerId", "==", learnerId));
+                const querySnapshot = await getDocs(q);
+                const batch = writeBatch(db);
+                querySnapshot.forEach(doc => batch.delete(doc.ref));
+                await batch.commit();
+            } catch (error) {
+                console.error("Error deleting learner: ", error);
+                showMessage("Error deleting learner.");
+            }
+        }
+
+        // --- Event Listeners ---
+        saveDetailsBtn.addEventListener('click', saveClassDetails);
+        addLearnerBtn.addEventListener('click', addLearner);
+        learnerNameInput.addEventListener('keypress', (e) => e.key === 'Enter' && addLearner());
+
+        bulkAddBtn.addEventListener('click', () => {
+            const file = csvFileInput.files[0];
+            if (!file) return showMessage("Please select a CSV file.");
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const names = event.target.result.split(/\r?\n/).map(name => name.trim()).filter(name => name);
+                bulkAddLearners(names);
+            };
+            reader.readAsText(file);
+        });
+
+        learnersList.addEventListener('click', async (e) => {
+            const card = e.target.closest('[data-id]');
+            if (!card) return;
+            const learnerId = card.getAttribute('data-id');
+            const learnerName = card.querySelector('h3').textContent;
+            const date = attendanceDate.value;
+
+            if (e.target.classList.contains('status-btn')) {
+                const status = e.target.getAttribute('data-status');
+                if (status === 'Absent' || status === 'Late') {
+                    openNoteModal(learnerId, status, date, learnerName);
+                } else {
+                    await setAttendance(learnerId, status, date);
+                }
+            } else if (e.target.classList.contains('view-history-btn')) {
+                openHistoryModal(learnerId, learnerName);
+            } else if (e.target.classList.contains('delete-learner-btn')) {
+                showConfirmation(
+                    'Are you sure you want to delete this learner and all their attendance records?',
+                    () => deleteLearner(learnerId)
+                );
+            }
+        });
+        
+        // --- Modal Logic ---
+        function showMessage(message) {
+            messageText.textContent = message;
+            messageActions.innerHTML = `<button id="messageOkBtn" class="bg-indigo-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-indigo-700">OK</button>`;
+            document.getElementById('messageOkBtn').onclick = () => messageModal.classList.add('hidden');
+            messageModal.classList.remove('hidden');
+        }
+
+        function showConfirmation(message, onConfirm) {
+            messageText.textContent = message;
+            messageActions.innerHTML = `
+                <button id="confirmYesBtn" class="bg-red-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-red-700">Yes, Delete</button>
+                <button id="confirmNoBtn" class="bg-gray-300 text-gray-800 font-semibold py-2 px-6 rounded-lg hover:bg-gray-400">Cancel</button>`;
+            messageModal.classList.remove('hidden');
+            document.getElementById('confirmYesBtn').onclick = () => {
+                onConfirm();
+                messageModal.classList.add('hidden');
+            };
+            document.getElementById('confirmNoBtn').onclick = () => messageModal.classList.add('hidden');
+        }
+
+        function openNoteModal(learnerId, status, date, learnerName) {
+            noteModalTitle.textContent = `Add Note for ${learnerName} (${status})`;
+            attendanceNoteInput.value = '';
+            noteModal.classList.remove('hidden');
+            
+            saveNoteBtn.onclick = async () => {
+                const note = attendanceNoteInput.value.trim();
+                await setAttendance(learnerId, status, date, note);
+                noteModal.classList.add('hidden');
+            };
+        }
+        cancelNoteBtn.addEventListener('click', () => noteModal.classList.add('hidden'));
+
+        async function openHistoryModal(learnerId, learnerName) {
+            modalTitle.textContent = `Attendance History for ${learnerName}`;
+            modalBody.innerHTML = '<p>Loading history...</p>';
+            historyModal.classList.remove('hidden');
+            const attendanceCol = getAttendanceCollection();
+            if(!attendanceCol) return;
+            const q = query(attendanceCol, where("learnerId", "==", learnerId));
+            onSnapshot(q, (snapshot) => {
+                if (snapshot.empty) {
+                    modalBody.innerHTML = '<p class="text-gray-500">No records found.</p>';
+                    return;
+                }
+                const records = [];
+                snapshot.forEach(doc => records.push(doc.data()));
+                records.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+                let absentCount = 0;
+                let lateCount = 0;
+                records.forEach(r => {
+                    if (r.status === 'Absent') absentCount++;
+                    if (r.status === 'Late') lateCount++;
+                });
+
+                let summaryHtml = `
+                    <div class="bg-gray-100 p-4 rounded-lg mb-4 flex justify-around text-center">
+                        <div>
+                            <p class="text-2xl font-bold text-red-600">${absentCount}</p>
+                            <p class="text-sm text-gray-600">Total Absences</p>
+                        </div>
+                        <div>
+                            <p class="text-2xl font-bold text-yellow-600">${lateCount}</p>
+                            <p class="text-sm text-gray-600">Total Lates</p>
+                        </div>
+                    </div>`;
+
+                let historyHtml = '<ul class="space-y-3">';
+                records.forEach(record => {
+                    let statusColorClass = '';
+                    switch(record.status) {
+                        case 'Present': statusColorClass = 'text-green-600'; break;
+                        case 'Absent': statusColorClass = 'text-red-600'; break;
+                        case 'Late': statusColorClass = 'text-yellow-600'; break;
+                    }
+                    historyHtml += `<li class="bg-gray-50 p-3 rounded-md">
+                        <div class="flex justify-between items-center">
+                            <span class="font-medium">${record.date}</span>
+                            <span class="font-semibold ${statusColorClass}">${record.status}</span>
+                        </div>
+                        ${record.note ? `<p class="text-sm text-gray-600 mt-1 pl-1 border-l-2 border-gray-300">Note: ${record.note}</p>` : ''}
+                    </li>`;
+                });
+                historyHtml += '</ul>';
+                modalBody.innerHTML = summaryHtml + historyHtml;
+            });
+        }
+
+        closeModalBtn.addEventListener('click', () => historyModal.classList.add('hidden'));
+        historyModal.addEventListener('click', (e) => {
+            if (e.target === historyModal) historyModal.classList.add('hidden');
+        });
+
+        // --- Report Generation ---
+        async function generateReport() {
+            const monthYear = reportMonthInput.value;
+            if (!monthYear) {
+                showMessage("Please select a month to generate the report.");
+                return;
+            }
+            
+            const [year, month] = monthYear.split('-');
+            const startDate = `${year}-${month}-01`;
+            const endDate = new Date(year, month, 0).getDate(); // Get last day of the month
+            const lastDate = `${year}-${month}-${String(endDate).padStart(2, '0')}`;
+
+            // 1. Fetch all learners
+            const learnersCol = getLearnersCollection();
+            if (!learnersCol) return;
+            const learnersSnapshot = await getDocs(learnersCol);
+            const learnersMap = new Map();
+            learnersSnapshot.forEach(doc => learnersMap.set(doc.id, doc.data().name));
+
+            // 2. Fetch attendance for the month
+            const attendanceCol = getAttendanceCollection();
+            if (!attendanceCol) return;
+            const q = query(attendanceCol, where("date", ">=", startDate), where("date", "<=", lastDate));
+            const attendanceSnapshot = await getDocs(q);
+            
+            if (attendanceSnapshot.empty) {
+                return showMessage("No attendance records found for the selected month.");
+            }
+
+            // 3. Generate CSV content
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += "Learner Name,Date,Status,Note\r\n";
+
+            const records = [];
+            attendanceSnapshot.forEach(doc => records.push(doc.data()));
+            records.sort((a,b) => new Date(a.date) - new Date(b.date) || learnersMap.get(a.learnerId).localeCompare(learnersMap.get(b.learnerId)));
+
+            records.forEach(rec => {
+                const learnerName = learnersMap.get(rec.learnerId) || "Unknown Learner";
+                const note = rec.note ? rec.note.replace(/,/g, ";") : ""; // Sanitize commas in notes
+                csvContent += `${learnerName},${rec.date},${rec.status},${note}\r\n`;
+            });
+
+            // 4. Trigger download
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `attendance_report_${year}_${month}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        downloadReportBtn.addEventListener('click', generateReport);
+
+    </script>
+</body>
+</html>
