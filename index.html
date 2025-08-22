@@ -182,15 +182,15 @@
 
         // --- Firebase & App Config ---
         // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyDaySiKZA6PrEgpxBw-v2pngSSBwYZpqUY",
-  authDomain: "attendance-tracker-825cc.firebaseapp.com",
-  projectId: "attendance-tracker-825cc",
-  storageBucket: "attendance-tracker-825cc.firebasestorage.app",
-  messagingSenderId: "539619569987",
-  appId: "1:539619569987:web:15e9e25a8a7db639d63ff6",
-  measurementId: "G-PQZBDQN0GL"
-};
+            const firebaseConfig = {
+              apiKey: "AIzaSyDaySiKZA6PrEgpxBw-v2pngSSBwYZpqUY",
+              authDomain: "attendance-tracker-825cc.firebaseapp.com",
+              projectId: "attendance-tracker-825cc",
+              storageBucket: "attendance-tracker-825cc.firebasestorage.app",
+              messagingSenderId: "539619569987",
+              appId: "1:539619569987:web:15e9e25a8a7db639d63ff6",
+              measurementId: "G-PQZBDQN0GL"
+            };
 
         // --- UI Elements ---
         const el = (id) => document.getElementById(id);
@@ -210,44 +210,35 @@ const firebaseConfig = {
         const lateDate = el('lateDate'), lateLearnersList = el('lateLearnersList');
 
         // --- App Initialization ---
-        async function initializeAppAndSignIn() {
-            try {
-                let user = auth.currentUser;
-                
-                // If no user is currently signed in, attempt to sign in.
-                if (!user) {
-                    try {
-                        const userCredential = (typeof __firebase_config !== 'undefined' && typeof __initial_auth_token !== 'undefined')
-                            ? await signInWithCustomToken(auth, __initial_auth_token)
-                            : await signInAnonymously(auth);
-                        user = userCredential.user;
-                    } catch (error) {
-                        console.error("Error during sign-in:", error);
-                        appLoading.innerHTML = `<p class="text-red-500">Could not connect to the database. Please check your Firebase setup and security rules.</p>`;
-                        return; // Stop execution if sign-in fails
+        // This is the most reliable way to handle Firebase auth state.
+        // It runs once on page load and handles both new sign-ins and existing sessions.
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                // If a user object exists, the app is ready to go.
+                console.log("Authentication successful. User ID:", user.uid);
+                userId = user.uid;
+                appLoading.classList.add('hidden');
+                appContainer.classList.remove('hidden');
+                loadClassDetails();
+                loadLearners();
+                loadLateLearners();
+            } else {
+                // If no user exists, it's the first visit. Attempt to sign in anonymously.
+                // onAuthStateChanged will run *again* after this completes successfully.
+                console.log("No user found. Attempting anonymous sign-in...");
+                try {
+                    if (typeof __firebase_config !== 'undefined' && typeof __initial_auth_token !== 'undefined') {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(auth);
                     }
+                } catch (error) {
+                    console.error("Error during initial sign-in:", error);
+                    appLoading.innerHTML = `<p class="text-red-500">Could not connect to the database. Please check your Firebase setup and security rules.</p>`;
                 }
-
-                // If we have a user by now, setup the app
-                if (user) {
-                    userId = user.uid;
-                    appLoading.classList.add('hidden');
-                    appContainer.classList.remove('hidden');
-                    loadClassDetails();
-                    loadLearners();
-                    loadLateLearners();
-                } else {
-                    // This case should not be reached with the logic above, but is a safeguard.
-                    throw new Error("User authentication failed unexpectedly.");
-                }
-
-            } catch (e) {
-                console.error("Critical Initialization Error:", e);
-                appLoading.innerHTML = `<p class="text-red-500">A critical error occurred during app startup.</p>`;
             }
-        }
+        });
 
-        initializeAppAndSignIn(); // Start the initialization process
 
         // --- Tab Logic ---
         function switchTab(activeTab) {
@@ -504,7 +495,7 @@ const firebaseConfig = {
             records.forEach(r => {
                 const name = learnersMap.get(r.learnerId) || "Unknown";
                 const note = r.note ? r.note.replace(/,/g, ";") : "";
-                csvContent += `${name},${r.date},${r.status},${note}\r\n`;
+                csvContent += `${name},${r.date},${r.status},${note}\r.n`;
             });
 
             const link = document.createElement("a");
