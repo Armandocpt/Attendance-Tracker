@@ -233,11 +233,8 @@
                 // onAuthStateChanged will run *again* after this completes successfully.
                 console.log("No user found. Attempting anonymous sign-in...");
                 try {
-                    if (typeof __firebase_config !== 'undefined' && typeof __initial_auth_token !== 'undefined') {
-                        await signInWithCustomToken(auth, __initial_auth_token);
-                    } else {
-                        await signInAnonymously(auth);
-                    }
+                    // Since a custom firebaseConfig is provided, always use anonymous sign-in.
+                    await signInAnonymously(auth);
                 } catch (error) {
                     console.error("Error during initial sign-in:", error);
                     appLoading.innerHTML = `<p class="text-red-500">Could not connect to the database. Please check your Firebase setup and security rules.</p>`;
