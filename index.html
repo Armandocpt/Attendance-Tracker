@@ -182,15 +182,21 @@
 
         // --- Firebase & App Config ---
         // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-            const firebaseConfig = {
-              apiKey: "AIzaSyDaySiKZA6PrEgpxBw-v2pngSSBwYZpqUY",
-              authDomain: "attendance-tracker-825cc.firebaseapp.com",
-              projectId: "attendance-tracker-825cc",
-              storageBucket: "attendance-tracker-825cc.firebasestorage.app",
-              messagingSenderId: "539619569987",
-              appId: "1:539619569987:web:15e9e25a8a7db639d63ff6",
-              measurementId: "G-PQZBDQN0GL"
-            };
+        const firebaseConfig = {
+            apiKey: "AIzaSyDaySiKZA6PrEgpxBw-v2pngSSBwYZpqUY",
+            authDomain: "attendance-tracker-825cc.firebaseapp.com",
+            projectId: "attendance-tracker-825cc",
+            storageBucket: "attendance-tracker-825cc.appspot.com",
+            messagingSenderId: "539619569987",
+            appId: "1:539619569987:web:15e9e25a8a7db639d63ff6",
+            measurementId: "G-PQZBDQN0GL"
+        };
+        
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-attendance-app';
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        let userId = null;
 
         // --- UI Elements ---
         const el = (id) => document.getElementById(id);
