@@ -243,10 +243,10 @@
             }
         }
         
-        async function deleteSharedLearner(classId, learnerId) {
+        async function deleteSharedLearner(classId, learnerId, learnerName) {
             try {
                 await deleteDoc(doc(db, `classes/${classId}/learners/${learnerId}`));
-                showMessage(`Learner has been deleted.`);
+                showMessage(`${learnerName} has been deleted.`);
                 loadLearnersForClass(classId); // Refresh the list
             } catch (error) {
                 console.error("Error deleting shared learner:", error);
@@ -265,7 +265,7 @@
             }
             if (e.target.classList.contains('delete-shared-learner-btn')) {
                 showConfirmation(`Are you sure you want to permanently delete ${learnerName}? This cannot be undone.`, () => {
-                    deleteSharedLearner(classId, learnerId);
+                    deleteSharedLearner(classId, learnerId, learnerName);
                 });
             }
         });
@@ -422,26 +422,49 @@
                 <div id="learnersList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
                 <div id="loading" class="text-center hidden"><p class="text-lg">Loading...</p></div>
             `;
-            // Re-bind event listeners for the newly injected elements
+            // Re-bind event listeners and load initial data
             bindPrivateTrackerEvents();
+            loadPrivateLearners();
         }
 
         function bindPrivateTrackerEvents() {
-            // This function is necessary because the elements are added dynamically
-            el('saveDetailsBtn').addEventListener('click', savePrivateClassDetails);
-            el('addLearnerBtn').addEventListener('click', addPrivateLearner);
-            el('bulkAddBtn').addEventListener('click', () => {
-                const file = el('csvFileInput').files[0];
-                if (!file) return showMessage("Please select a CSV file.");
-                const reader = new FileReader();
-                reader.onload = (e) => bulkAddPrivateLearners(e.target.result.split(/\r?\n/).map(n => n.trim()).filter(Boolean));
-                reader.readAsText(file);
-            });
-            el('learnersList').addEventListener('click', handlePrivateLearnerClick);
-            el('downloadReportBtn').addEventListener('click', generatePrivateReport);
             el('attendanceDate').value = new Date().toISOString().slice(0, 10);
             el('reportMonth').value = new Date().toISOString().slice(0, 7);
             el('attendanceDate').addEventListener('change', loadPrivateLearners);
+
+            // Use a single, delegated event listener for all clicks in the private tracker tab
+            contentAttendance.addEventListener('click', (e) => {
+                const target = e.target;
+
+                // Handle simple button clicks by ID
+                if (target.id === 'saveDetailsBtn') savePrivateClassDetails();
+                else if (target.id === 'addLearnerBtn') addPrivateLearner();
+                else if (target.id === 'downloadReportBtn') generatePrivateReport();
+                else if (target.id === 'bulkAddBtn') {
+                    const file = el('csvFileInput').files[0];
+                    if (!file) return showMessage("Please select a CSV file.");
+                    const reader = new FileReader();
+                    reader.onload = (event) => bulkAddPrivateLearners(event.target.result.split(/\r?\n/).map(n => n.trim()).filter(Boolean));
+                    reader.readAsText(file);
+                }
+
+                // Handle clicks within the dynamic learner cards
+                const card = target.closest('[data-id]');
+                if (!card) return;
+                const learnerId = card.dataset.id;
+                const learnerName = card.querySelector('h3').textContent;
+                const date = el('attendanceDate').value;
+
+                if (target.matches('.status-btn')) {
+                    const status = target.dataset.status;
+                    if (status === 'Absent' || status === 'Late' || status === 'Bunking') openPrivateNoteModal(learnerId, status, date, learnerName);
+                    else setPrivateAttendance(learnerId, status, date);
+                } else if (target.matches('.view-history-btn')) {
+                    openPrivateHistoryModal(learnerId, learnerName);
+                } else if (target.matches('.delete-learner-btn')) {
+                    showConfirmation('Delete this learner and all their records?', () => deletePrivateLearner(learnerId));
+                }
+            });
         }
 
         // All the original functions, now renamed to be specific to the private tracker
@@ -550,24 +573,6 @@
                 snapshot.forEach(d => batch.delete(d.ref));
                 await batch.commit();
             } catch (e) { console.error("Error deleting learner: ", e); showMessage("Error deleting learner."); }
-        }
-        
-        function handlePrivateLearnerClick(e) {
-            const card = e.target.closest('[data-id]');
-            if (!card) return;
-            const learnerId = card.dataset.id;
-            const learnerName = card.querySelector('h3').textContent;
-            const date = el('attendanceDate').value;
-
-            if (e.target.matches('.status-btn')) {
-                const status = e.target.dataset.status;
-                if (status === 'Absent' || status === 'Late' || status === 'Bunking') openPrivateNoteModal(learnerId, status, date, learnerName);
-                else setPrivateAttendance(learnerId, status, date);
-            } else if (e.target.matches('.view-history-btn')) {
-                openPrivateHistoryModal(learnerId, learnerName);
-            } else if (e.target.matches('.delete-learner-btn')) {
-                showConfirmation('Delete this learner and all their records?', () => deletePrivateLearner(learnerId));
-            }
         }
         
         function openPrivateNoteModal(learnerId, status, date, learnerName) {
