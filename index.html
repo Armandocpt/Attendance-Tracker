@@ -23,11 +23,7 @@
 
     <div id="app-container" class="hidden">
         <header class="sticky top-0 z-50 bg-green-600 shadow-lg">
-            <div class="container mx-auto relative flex items-center justify-center text-center py-4 px-4 sm:px-6 lg:px-8">
-                <div class="absolute left-4 sm:left-6 lg:left-8 flex items-center space-x-3">
-                    <img src="https://placehold.co/60x60/4ade80/ffffff?text=Logo" alt="School Logo" class="h-12 w-12 rounded-full border-2 border-white">
-                    <span class="text-xl font-bold text-white hidden md:block">School Name</span>
-                </div>
+            <div class="container mx-auto relative flex items-center justify-center text-center py-4 px-4 sm:px-6 lg:px-8 h-24">
                 <div>
                     <h1 class="text-3xl sm:text-4xl font-bold text-white">Classroom Manager</h1>
                     <p id="classDetailsHeader" class="text-md text-green-100 mt-2">
@@ -37,14 +33,19 @@
             </div>
         </header>
 
-        <main class="container mx-auto p-4 sm:p-6 lg:p-8">
-            <div class="mb-8 border-b border-gray-300">
-                <nav class="flex space-x-8" aria-label="Tabs">
-                    <button id="tab-attendance" class="tab-btn active font-medium text-lg py-4 px-1 border-b-4 border-transparent hover:border-gray-400 hover:text-gray-600 transition">My Private Tracker</button>
-                    <button id="tab-latecoming" class="tab-btn font-medium text-lg py-4 px-1 border-b-4 border-transparent hover:border-gray-400 hover:text-gray-600 transition">School Late Coming</button>
-                </nav>
-            </div>
+        <!-- Sticky Tab Navigation -->
+        <div class="sticky top-24 z-40 bg-white shadow-md">
+            <main class="container mx-auto">
+                <div class="border-b border-gray-300">
+                    <nav class="flex space-x-8 px-4 sm:px-6 lg:px-8" aria-label="Tabs">
+                        <button id="tab-attendance" class="tab-btn active font-medium text-lg py-4 px-1 border-b-4 border-transparent hover:border-gray-400 hover:text-gray-600 transition">My Private Tracker</button>
+                        <button id="tab-latecoming" class="tab-btn font-medium text-lg py-4 px-1 border-b-4 border-transparent hover:border-gray-400 hover:text-gray-600 transition">School Late Coming</button>
+                    </nav>
+                </div>
+            </main>
+        </div>
 
+        <main class="container mx-auto p-4 sm:p-6 lg:p-8">
             <div id="content-attendance" class="tab-content">
                 <!-- All sections for the private attendance tracker will be injected here -->
             </div>
@@ -64,7 +65,10 @@
                 </div>
 
                 <div class="bg-white p-6 rounded-xl shadow-md mb-8 max-w-4xl mx-auto">
-                    <h2 class="text-2xl font-semibold mb-4">Daily Late Coming List</h2>
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-2xl font-semibold">Daily Late Coming List</h2>
+                        <button id="exportLateListBtn" class="bg-blue-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-blue-700 transition">Export List</button>
+                    </div>
                     <div class="flex items-center justify-center gap-4 mb-6">
                          <h3 class="text-xl font-semibold">Date:</h3>
                          <input type="date" id="lateListDate" class="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 transition">
@@ -128,6 +132,8 @@
         const lateListDate = el('lateListDate'), recordedLateList = el('recordedLateList');
         const historyModal = el('historyModal'), closeModalBtn = el('closeModalBtn'), modalTitle = el('modalTitle'), modalBody = el('modalBody');
         const noteModal = el('noteModal'), cancelNoteBtn = el('cancelNoteBtn');
+        const classDetailsHeader = el('classDetailsHeader');
+        const exportLateListBtn = el('exportLateListBtn');
 
         // --- App Initialization ---
         onAuthStateChanged(auth, async (user) => {
@@ -157,9 +163,11 @@
             if (activeTab === 'attendance') {
                 contentAttendance.classList.remove('hidden');
                 tabAttendance.classList.add('active');
+                classDetailsHeader.classList.remove('hidden');
             } else {
                 contentLateComing.classList.remove('hidden');
                 tabLateComing.classList.add('active');
+                classDetailsHeader.classList.add('hidden');
             }
         }
         tabAttendance.addEventListener('click', () => switchTab('attendance'));
@@ -169,30 +177,10 @@
         // LATE COMING TRACKER (SHARED DATA)
         // =====================================================================
         
-        // --- Helper function to provide correct security rules ---
-        function getSecureRules() {
-            return `rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    // Rule 1: Secures private data
-    match /artifacts/{appId}/users/{userId}/{document=**} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-    }
-    // Rule 2: Allows reading the list of shared classes and learners
-    match /classes/{classId}/{document=**} {
-      allow read: if request.auth != null;
-    }
-    // Rule 3: Allows reading and writing to the shared late records
-    match /lateRecords/{recordId} {
-      allow read, write: if request.auth != null;
-    }
-  }
-}`;
-        }
-
         async function setupLateComingTracker() {
             lateListDate.value = new Date().toISOString().slice(0, 10);
             lateListDate.addEventListener('change', loadRecordedLateLearners);
+            exportLateListBtn.addEventListener('click', generateLateListReport);
             loadRecordedLateLearners(); // Initial load for today
 
             try {
@@ -222,13 +210,8 @@ service cloud.firestore {
                     }
                 });
             } catch (error) {
-                if (error.code === 'permission-denied') {
-                    alert("SECURITY RULE ERROR:\nThe app is not allowed to read the list of classes. Please go to your Firebase project -> Firestore -> Rules and paste the following rules:\n\n" + getSecureRules());
-                    classSelector.innerHTML = '<option value="">-- Permission Denied --</option>';
-                } else {
-                    console.error("Error loading classes:", error);
-                    classSelector.innerHTML = '<option value="">-- Error Loading Classes --</option>';
-                }
+                console.error("Error loading classes:", error);
+                classSelector.innerHTML = '<option value="">-- Error Loading Classes --</option>';
             }
         }
 
@@ -247,29 +230,41 @@ service cloud.firestore {
                 learnersToMarkList.innerHTML = learners.map(learner => `
                     <div class="bg-gray-50 p-4 rounded-lg flex flex-col sm:flex-row justify-between items-center" data-learner-id="${learner.id}" data-learner-name="${learner.name}" data-class-id="${classId}">
                         <span class="font-bold text-lg mb-2 sm:mb-0">${learner.name}</span>
-                        <button class="mark-late-btn bg-yellow-500 text-white font-semibold py-2 px-6 rounded-lg hover:bg-yellow-600 transition w-full sm:w-auto">Mark as Late</button>
+                        <div class="flex gap-2 w-full sm:w-auto">
+                            <button class="mark-late-btn flex-grow bg-yellow-500 text-white font-semibold py-2 px-6 rounded-lg hover:bg-yellow-600 transition">Mark as Late</button>
+                            <button class="delete-shared-learner-btn bg-red-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-red-700 transition">X</button>
+                        </div>
                     </div>
                 `).join('');
             } catch (error) {
-                 if (error.code === 'permission-denied') {
-                    alert("SECURITY RULE ERROR:\nThe app is not allowed to read learners for this class. Please go to your Firebase project -> Firestore -> Rules and paste the following rules:\n\n" + getSecureRules());
-                    learnersToMarkList.innerHTML = '<p class="text-center text-red-500">Permission Denied. Check security rules.</p>';
-                } else {
-                    console.error("Error loading learners:", error);
-                    learnersToMarkList.innerHTML = '<p class="text-center text-red-500">Error loading learners.</p>';
-                }
+                 console.error("Error loading learners:", error);
+                 learnersToMarkList.innerHTML = '<p class="text-center text-red-500">Error loading learners.</p>';
+            }
+        }
+        
+        async function deleteSharedLearner(classId, learnerId, learnerName) {
+            if (!confirm(`Are you sure you want to permanently delete ${learnerName}? This cannot be undone.`)) return;
+            try {
+                await deleteDoc(doc(db, `classes/${classId}/learners/${learnerId}`));
+                alert(`${learnerName} has been deleted.`);
+                loadLearnersForClass(classId); // Refresh the list
+            } catch (error) {
+                console.error("Error deleting shared learner:", error);
+                alert("Failed to delete learner.");
             }
         }
 
         learnersToMarkList.addEventListener('click', (e) => {
+            const container = e.target.closest('[data-learner-id]');
+            if (!container) return;
+            const { learnerId, learnerName, classId } = container.dataset;
+
             if (e.target.classList.contains('mark-late-btn')) {
-                const container = e.target.closest('[data-learner-id]');
-                const { learnerId, learnerName, classId } = container.dataset;
                 const note = prompt(`Add an optional note for ${learnerName}:`);
-                
-                if (note !== null) { // Will be null if user clicks cancel
-                    recordLateComing(classId, learnerId, learnerName, note);
-                }
+                if (note !== null) recordLateComing(classId, learnerId, learnerName, note);
+            }
+            if (e.target.classList.contains('delete-shared-learner-btn')) {
+                deleteSharedLearner(classId, learnerId, learnerName);
             }
         });
 
@@ -296,39 +291,65 @@ service cloud.firestore {
             const date = lateListDate.value;
             recordedLateList.innerHTML = '<p class="text-center text-gray-500">Loading late list...</p>';
 
+            try {
+                const classesSnap = await getDocs(collection(db, 'classes'));
+                const classesMap = new Map(classesSnap.docs.map(doc => [doc.id, doc.data().className]));
+
+                const q = query(collection(db, 'lateRecords'), where("date", "==", date));
+                onSnapshot(q, (snapshot) => {
+                    if (snapshot.empty) {
+                        recordedLateList.innerHTML = '<p class="text-center text-gray-500">No learners were recorded late on this date.</p>';
+                        return;
+                    }
+
+                    const records = snapshot.docs.map(doc => doc.data()).sort((a,b) => (a.timestamp?.seconds || 0) - (b.timestamp?.seconds || 0));
+
+                    recordedLateList.innerHTML = records.map(record => {
+                        const className = classesMap.get(record.classId) || 'Unknown Class';
+                        return `
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <div class="flex justify-between items-center">
+                                    <span class="font-bold text-lg">${record.learnerName}</span>
+                                    <span class="text-sm font-medium text-gray-700">${className}</span>
+                                </div>
+                                ${record.note ? `<p class="text-sm text-gray-600 mt-1 pl-1 border-l-2 border-gray-300">Note: ${record.note}</p>` : ''}
+                            </div>
+                        `;
+                    }).join('');
+                });
+            } catch (error) {
+                console.error("Error loading late records:", error);
+                recordedLateList.innerHTML = '<p class="text-center text-red-500">Could not load late records.</p>';
+            }
+        }
+        
+        async function generateLateListReport() {
+            const date = lateListDate.value;
+            const q = query(collection(db, 'lateRecords'), where("date", "==", date));
+            const snapshot = await getDocs(q);
+
+            if (snapshot.empty) {
+                alert("No late records to export for this date.");
+                return;
+            }
+            
             const classesSnap = await getDocs(collection(db, 'classes'));
             const classesMap = new Map(classesSnap.docs.map(doc => [doc.id, doc.data().className]));
 
-            const q = query(collection(db, 'lateRecords'), where("date", "==", date));
-            onSnapshot(q, (snapshot) => {
-                if (snapshot.empty) {
-                    recordedLateList.innerHTML = '<p class="text-center text-gray-500">No learners were recorded late on this date.</p>';
-                    return;
-                }
-
-                const records = snapshot.docs.map(doc => doc.data()).sort((a,b) => a.timestamp - b.timestamp);
-
-                recordedLateList.innerHTML = records.map(record => {
-                    const className = classesMap.get(record.classId) || 'Unknown Class';
-                    return `
-                        <div class="bg-gray-50 p-4 rounded-lg">
-                            <div class="flex justify-between items-center">
-                                <span class="font-bold text-lg">${record.learnerName}</span>
-                                <span class="text-sm font-medium text-gray-700">${className}</span>
-                            </div>
-                            ${record.note ? `<p class="text-sm text-gray-600 mt-1 pl-1 border-l-2 border-gray-300">Note: ${record.note}</p>` : ''}
-                        </div>
-                    `;
-                }).join('');
-            }, (error) => {
-                 if (error.code === 'permission-denied') {
-                    alert("SECURITY RULE ERROR:\nThe app is not allowed to read the daily late list. Please go to your Firebase project -> Firestore -> Rules and paste the following rules:\n\n" + getSecureRules());
-                    recordedLateList.innerHTML = '<p class="text-center text-red-500">Permission Denied. Check security rules.</p>';
-                } else {
-                    console.error("Error loading late records:", error);
-                    recordedLateList.innerHTML = '<p class="text-center text-red-500">Could not load late records.</p>';
-                }
+            let csvContent = "data:text/csv;charset=utf-8,Learner Name,Class,Note,Time\r\n";
+            const records = snapshot.docs.map(doc => doc.data()).sort((a,b) => (a.timestamp?.seconds || 0) - (b.timestamp?.seconds || 0));
+            
+            records.forEach(r => {
+                const className = classesMap.get(r.classId) || "Unknown";
+                const note = r.note ? r.note.replace(/,/g, ";") : "";
+                const time = r.timestamp ? new Date(r.timestamp.seconds * 1000).toLocaleTimeString() : 'N/A';
+                csvContent += `${r.learnerName},${className},${note},${time}\r\n`;
             });
+
+            const link = document.createElement("a");
+            link.href = encodeURI(csvContent);
+            link.download = `late_list_${date}.csv`;
+            link.click();
         }
 
 
@@ -458,8 +479,9 @@ service cloud.firestore {
             if (status === 'Present') statusColorClass = 'text-green-600';
             if (status === 'Absent') statusColorClass = 'text-red-600';
             if (status === 'Late') statusColorClass = 'text-yellow-600';
+            if (status === 'Bunking') statusColorClass = 'text-slate-600';
             return `
-                <div class="bg-white p-5 rounded-xl shadow-lg flex flex-col space-y-4 border-2 ${status === 'Not Marked' ? 'border-gray-200' : status === 'Present' ? 'border-green-500' : status === 'Absent' ? 'border-red-500' : 'border-yellow-500'}" data-id="${learner.id}">
+                <div class="bg-white p-5 rounded-xl shadow-lg flex flex-col space-y-4 border-2 ${status === 'Not Marked' ? 'border-gray-200' : status === 'Present' ? 'border-green-500' : status === 'Absent' ? 'border-red-500' : status === 'Late' ? 'border-yellow-500' : 'border-slate-500'}" data-id="${learner.id}">
                     <div class="flex-grow">
                         <div class="flex justify-between items-center">
                             <h3 class="text-xl font-bold text-gray-900">${learner.name}</h3>
@@ -467,10 +489,11 @@ service cloud.firestore {
                         </div>
                         <p class="text-sm text-gray-500">Status: <span class="font-semibold ${statusColorClass}">${status}</span></p>
                     </div>
-                    <div class="flex flex-wrap gap-2 justify-center">
-                        <button class="status-btn flex-1 bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition" data-status="Present">Present</button>
-                        <button class="status-btn flex-1 bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition" data-status="Absent">Absent</button>
-                        <button class="status-btn flex-1 bg-yellow-500 text-white px-4 py-2 rounded-md hover:bg-yellow-600 transition" data-status="Late">Late</button>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button class="status-btn bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition" data-status="Present">Present</button>
+                        <button class="status-btn bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition" data-status="Absent">Absent</button>
+                        <button class="status-btn bg-yellow-500 text-white px-4 py-2 rounded-md hover:bg-yellow-600 transition" data-status="Late">Late</button>
+                        <button class="status-btn bg-slate-500 text-white px-4 py-2 rounded-md hover:bg-slate-600 transition" data-status="Bunking">Bunking</button>
                     </div>
                     <div class="pt-2 border-t border-gray-200 mt-4 flex justify-between items-center">
                          <button class="view-history-btn text-sm text-indigo-600 hover:underline">View History</button>
@@ -513,7 +536,7 @@ service cloud.firestore {
 
             if (e.target.matches('.status-btn')) {
                 const status = e.target.dataset.status;
-                if (status === 'Absent' || status === 'Late') openPrivateNoteModal(learnerId, status, date, learnerName);
+                if (status === 'Absent' || status === 'Late' || status === 'Bunking') openPrivateNoteModal(learnerId, status, date, learnerName);
                 else setPrivateAttendance(learnerId, status, date);
             } else if (e.target.matches('.view-history-btn')) {
                 openPrivateHistoryModal(learnerId, learnerName);
@@ -545,7 +568,7 @@ service cloud.firestore {
                 const lateCount = records.filter(r => r.status === 'Late').length;
                 const summaryHtml = `<div class="bg-gray-100 p-4 rounded-lg mb-4 flex justify-around text-center"><div><p class="text-2xl font-bold text-red-600">${absentCount}</p><p class="text-sm text-gray-600">Absences</p></div><div><p class="text-2xl font-bold text-yellow-600">${lateCount}</p><p class="text-sm text-gray-600">Lates</p></div></div>`;
                 const historyHtml = '<ul class="space-y-3">' + records.map(r => {
-                    const color = r.status === 'Present' ? 'text-green-600' : r.status === 'Absent' ? 'text-red-600' : 'text-yellow-600';
+                    const color = r.status === 'Present' ? 'text-green-600' : r.status === 'Absent' ? 'text-red-600' : r.status === 'Late' ? 'text-yellow-600' : 'text-slate-600';
                     return `<li class="bg-gray-50 p-3 rounded-md"><div class="flex justify-between items-center"><span class="font-medium">${r.date}</span><span class="font-semibold ${color}">${r.status}</span></div>${r.note ? `<p class="text-sm text-gray-600 mt-1 pl-1 border-l-2 border-gray-300">Note: ${r.note}</p>` : ''}</li>`;
                 }).join('') + '</ul>';
                 modalBody.innerHTML = summaryHtml + historyHtml;
