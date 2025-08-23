@@ -20,6 +20,15 @@
         <div class="spinner"></div>
         <p class="mt-4 text-lg text-gray-600">Initializing App...</p>
     </div>
+    
+    <div id="security-error-screen" class="hidden fixed inset-0 bg-red-100 p-8 z-50">
+        <div class="bg-white p-8 rounded-xl shadow-2xl max-w-3xl mx-auto">
+            <h1 class="text-3xl font-bold text-red-600 mb-4">Security Rule Error</h1>
+            <p class="mb-4 text-gray-700">The app is being blocked by your database security rules. To fix this, please go to your Firebase project's **Firestore Database -> Rules** tab and replace the entire contents of the editor with the rules below:</p>
+            <pre id="security-rules-display" class="bg-gray-800 text-left text-white p-4 rounded-lg text-xs overflow-x-auto whitespace-pre-wrap"></pre>
+        </div>
+    </div>
+
 
     <div id="app-container" class="hidden">
         <header class="sticky top-0 z-50 bg-green-600 shadow-lg">
@@ -101,7 +110,7 @@
         </main>
         
         <footer class="text-center p-4 text-gray-500 text-xs">
-            App Version: 1.5
+            App Version: 1.6
         </footer>
 
         <!-- All Modals -->
@@ -205,13 +214,15 @@
             console.error(`Permission Denied in ${context}:`, error);
             if (!securityRuleAlertShown) {
                 securityRuleAlertShown = true; // Prevent multiple alerts
-                const rules = getSecureRules();
-                showMessage(rules, true);
+                el('app-container').classList.add('hidden');
+                el('app-loading').classList.add('hidden');
+                el('security-rules-display').textContent = getSecureRules();
+                el('security-error-screen').classList.remove('hidden');
             }
         }
 
         function getSecureRules() {
-            const rules = `rules_version = '2';
+            return `rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     // Rule 1: Secures private data
@@ -228,8 +239,6 @@ service cloud.firestore {
     }
   }
 }`;
-            // Use HTML entities to preserve indentation in the pre tag
-            return rules.replace(/</g, "&lt;").replace(/>/g, "&gt;");
         }
 
         // =====================================================================
