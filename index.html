@@ -296,33 +296,31 @@ service cloud.firestore {
             const date = lateListDate.value;
             recordedLateList.innerHTML = '<p class="text-center text-gray-500">Loading late list...</p>';
 
-            try {
-                const classesSnap = await getDocs(collection(db, 'classes'));
-                const classesMap = new Map(classesSnap.docs.map(doc => [doc.id, doc.data().className]));
+            const classesSnap = await getDocs(collection(db, 'classes'));
+            const classesMap = new Map(classesSnap.docs.map(doc => [doc.id, doc.data().className]));
 
-                const q = query(collection(db, 'lateRecords'), where("date", "==", date));
-                onSnapshot(q, (snapshot) => {
-                    if (snapshot.empty) {
-                        recordedLateList.innerHTML = '<p class="text-center text-gray-500">No learners were recorded late on this date.</p>';
-                        return;
-                    }
+            const q = query(collection(db, 'lateRecords'), where("date", "==", date));
+            onSnapshot(q, (snapshot) => {
+                if (snapshot.empty) {
+                    recordedLateList.innerHTML = '<p class="text-center text-gray-500">No learners were recorded late on this date.</p>';
+                    return;
+                }
 
-                    const records = snapshot.docs.map(doc => doc.data()).sort((a,b) => a.timestamp - b.timestamp);
+                const records = snapshot.docs.map(doc => doc.data()).sort((a,b) => a.timestamp - b.timestamp);
 
-                    recordedLateList.innerHTML = records.map(record => {
-                        const className = classesMap.get(record.classId) || 'Unknown Class';
-                        return `
-                            <div class="bg-gray-50 p-4 rounded-lg">
-                                <div class="flex justify-between items-center">
-                                    <span class="font-bold text-lg">${record.learnerName}</span>
-                                    <span class="text-sm font-medium text-gray-700">${className}</span>
-                                </div>
-                                ${record.note ? `<p class="text-sm text-gray-600 mt-1 pl-1 border-l-2 border-gray-300">Note: ${record.note}</p>` : ''}
+                recordedLateList.innerHTML = records.map(record => {
+                    const className = classesMap.get(record.classId) || 'Unknown Class';
+                    return `
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <div class="flex justify-between items-center">
+                                <span class="font-bold text-lg">${record.learnerName}</span>
+                                <span class="text-sm font-medium text-gray-700">${className}</span>
                             </div>
-                        `;
-                    }).join('');
-                });
-            } catch (error) {
+                            ${record.note ? `<p class="text-sm text-gray-600 mt-1 pl-1 border-l-2 border-gray-300">Note: ${record.note}</p>` : ''}
+                        </div>
+                    `;
+                }).join('');
+            }, (error) => {
                  if (error.code === 'permission-denied') {
                     alert("SECURITY RULE ERROR:\nThe app is not allowed to read the daily late list. Please go to your Firebase project -> Firestore -> Rules and paste the following rules:\n\n" + getSecureRules());
                     recordedLateList.innerHTML = '<p class="text-center text-red-500">Permission Denied. Check security rules.</p>';
@@ -330,7 +328,7 @@ service cloud.firestore {
                     console.error("Error loading late records:", error);
                     recordedLateList.innerHTML = '<p class="text-center text-red-500">Could not load late records.</p>';
                 }
-            }
+            });
         }
 
 
