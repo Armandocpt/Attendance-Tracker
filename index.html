@@ -131,6 +131,7 @@
         const classSelector = el('classSelector'), learnersToMarkList = el('learnersToMarkList');
         const lateListDate = el('lateListDate'), recordedLateList = el('recordedLateList');
         const historyModal = el('historyModal'), closeModalBtn = el('closeModalBtn'), modalTitle = el('modalTitle'), modalBody = el('modalBody');
+        const messageModal = el('messageModal'), messageText = el('messageText'), messageActions = el('messageActions');
         const noteModal = el('noteModal'), cancelNoteBtn = el('cancelNoteBtn');
         const classDetailsHeader = el('classDetailsHeader');
         const exportLateListBtn = el('exportLateListBtn');
@@ -242,15 +243,14 @@
             }
         }
         
-        async function deleteSharedLearner(classId, learnerId, learnerName) {
-            if (!confirm(`Are you sure you want to permanently delete ${learnerName}? This cannot be undone.`)) return;
+        async function deleteSharedLearner(classId, learnerId) {
             try {
                 await deleteDoc(doc(db, `classes/${classId}/learners/${learnerId}`));
-                alert(`${learnerName} has been deleted.`);
+                showMessage(`Learner has been deleted.`);
                 loadLearnersForClass(classId); // Refresh the list
             } catch (error) {
                 console.error("Error deleting shared learner:", error);
-                alert("Failed to delete learner.");
+                showMessage("Failed to delete learner.");
             }
         }
 
@@ -264,7 +264,9 @@
                 if (note !== null) recordLateComing(classId, learnerId, learnerName, note);
             }
             if (e.target.classList.contains('delete-shared-learner-btn')) {
-                deleteSharedLearner(classId, learnerId, learnerName);
+                showConfirmation(`Are you sure you want to permanently delete ${learnerName}? This cannot be undone.`, () => {
+                    deleteSharedLearner(classId, learnerId);
+                });
             }
         });
 
@@ -280,10 +282,10 @@
                     timestamp: serverTimestamp(),
                     recordedBy: userId
                 });
-                alert(`${learnerName} has been recorded as late.`);
+                showMessage(`${learnerName} has been recorded as late.`);
             } catch (error) {
                 console.error("Error recording late coming:", error);
-                alert("Failed to record late coming. Please try again.");
+                showMessage("Failed to record late coming. Please try again.");
             }
         }
 
@@ -302,15 +304,18 @@
                         return;
                     }
 
-                    const records = snapshot.docs.map(doc => doc.data()).sort((a,b) => (a.timestamp?.seconds || 0) - (b.timestamp?.seconds || 0));
+                    const records = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()})).sort((a,b) => (a.timestamp?.seconds || 0) - (b.timestamp?.seconds || 0));
 
                     recordedLateList.innerHTML = records.map(record => {
                         const className = classesMap.get(record.classId) || 'Unknown Class';
                         return `
-                            <div class="bg-gray-50 p-4 rounded-lg">
+                            <div class="bg-gray-50 p-4 rounded-lg" data-record-id="${record.id}">
                                 <div class="flex justify-between items-center">
-                                    <span class="font-bold text-lg">${record.learnerName}</span>
-                                    <span class="text-sm font-medium text-gray-700">${className}</span>
+                                    <div>
+                                        <span class="font-bold text-lg">${record.learnerName}</span>
+                                        <span class="text-sm font-medium text-gray-700 ml-2">(${className})</span>
+                                    </div>
+                                    <button class="delete-late-record-btn bg-red-500 text-white font-semibold py-1 px-3 rounded-lg hover:bg-red-600 transition text-xs">Delete</button>
                                 </div>
                                 ${record.note ? `<p class="text-sm text-gray-600 mt-1 pl-1 border-l-2 border-gray-300">Note: ${record.note}</p>` : ''}
                             </div>
@@ -323,13 +328,33 @@
             }
         }
         
+        recordedLateList.addEventListener('click', (e) => {
+            if (e.target.classList.contains('delete-late-record-btn')) {
+                const container = e.target.closest('[data-record-id]');
+                const { recordId } = container.dataset;
+                showConfirmation('Are you sure you want to remove this late record?', () => {
+                    deleteLateRecord(recordId);
+                });
+            }
+        });
+
+        async function deleteLateRecord(recordId) {
+            try {
+                await deleteDoc(doc(db, 'lateRecords', recordId));
+                showMessage("Late record removed successfully.");
+            } catch (error) {
+                console.error("Error removing late record:", error);
+                showMessage("Failed to remove late record.");
+            }
+        }
+        
         async function generateLateListReport() {
             const date = lateListDate.value;
             const q = query(collection(db, 'lateRecords'), where("date", "==", date));
             const snapshot = await getDocs(q);
 
             if (snapshot.empty) {
-                alert("No late records to export for this date.");
+                showMessage("No late records to export for this date.");
                 return;
             }
             
@@ -407,7 +432,7 @@
             el('addLearnerBtn').addEventListener('click', addPrivateLearner);
             el('bulkAddBtn').addEventListener('click', () => {
                 const file = el('csvFileInput').files[0];
-                if (!file) return alert("Please select a CSV file.");
+                if (!file) return showMessage("Please select a CSV file.");
                 const reader = new FileReader();
                 reader.onload = (e) => bulkAddPrivateLearners(e.target.result.split(/\r?\n/).map(n => n.trim()).filter(Boolean));
                 reader.readAsText(file);
@@ -428,8 +453,8 @@
 
         async function savePrivateClassDetails() {
             const details = { teacherName: el('teacherName').value.trim(), className: el('className').value.trim(), subjectName: el('subjectName').value.trim() };
-            try { await setDoc(privatePaths.classDetails(), details); alert("Details saved!"); } 
-            catch (e) { console.error(e); alert("Failed to save details."); }
+            try { await setDoc(privatePaths.classDetails(), details); showMessage("Details saved!"); } 
+            catch (e) { console.error(e); showMessage("Failed to save details."); }
         }
 
         function loadClassDetails() {
@@ -446,17 +471,17 @@
 
         async function addPrivateLearner() {
             const name = el('learnerName').value.trim();
-            if (!name) return alert("Learner name is empty.");
+            if (!name) return showMessage("Learner name is empty.");
             try { await addDoc(privatePaths.learners(), { name, createdAt: new Date() }); el('learnerName').value = ''; } 
-            catch (e) { console.error(e); alert("Error adding learner."); }
+            catch (e) { console.error(e); showMessage("Error adding learner."); }
         }
         
         async function bulkAddPrivateLearners(names) {
-            if (!names || names.length === 0) return alert("No names found.");
+            if (!names || names.length === 0) return showMessage("No names found.");
             const batch = writeBatch(db);
             names.forEach(name => batch.set(doc(privatePaths.learners()), { name, createdAt: new Date() }));
-            try { await batch.commit(); alert(`Added ${names.length} learners.`); el('csvFileInput').value = ''; } 
-            catch (e) { console.error(e); alert("Bulk upload failed."); }
+            try { await batch.commit(); showMessage(`Added ${names.length} learners.`); el('csvFileInput').value = ''; } 
+            catch (e) { console.error(e); showMessage("Bulk upload failed."); }
         }
 
         function loadPrivateLearners() {
@@ -524,7 +549,7 @@
                 const batch = writeBatch(db);
                 snapshot.forEach(d => batch.delete(d.ref));
                 await batch.commit();
-            } catch (e) { console.error("Error deleting learner: ", e); alert("Error deleting learner."); }
+            } catch (e) { console.error("Error deleting learner: ", e); showMessage("Error deleting learner."); }
         }
         
         function handlePrivateLearnerClick(e) {
@@ -541,7 +566,7 @@
             } else if (e.target.matches('.view-history-btn')) {
                 openPrivateHistoryModal(learnerId, learnerName);
             } else if (e.target.matches('.delete-learner-btn')) {
-                if (confirm('Delete this learner and all their records?')) deletePrivateLearner(learnerId);
+                showConfirmation('Delete this learner and all their records?', () => deletePrivateLearner(learnerId));
             }
         }
         
@@ -578,7 +603,7 @@
         
         async function generatePrivateReport() {
             const monthYear = el('reportMonth').value;
-            if (!monthYear) return alert("Please select a month.");
+            if (!monthYear) return showMessage("Please select a month.");
             const [year, month] = monthYear.split('-');
             const startDate = `${year}-${month}-01`;
             const lastDay = new Date(year, month, 0).getDate();
@@ -589,7 +614,7 @@
 
             const q = query(privatePaths.attendance(), where("date", ">=", startDate), where("date", "<=", endDate));
             const attendanceSnap = await getDocs(q);
-            if (attendanceSnap.empty) return alert("No records for this month.");
+            if (attendanceSnap.empty) return showMessage("No records for this month.");
 
             let csvContent = "data:text/csv;charset=utf-8,Learner Name,Date,Status,Note\r\n";
             const records = attendanceSnap.docs.map(d => d.data()).sort((a,b) => new Date(a.date) - new Date(b.date) || (learnersMap.get(a.learnerId) || '').localeCompare(learnersMap.get(b.learnerId) || ''));
@@ -603,6 +628,28 @@
             link.href = encodeURI(csvContent);
             link.download = `attendance_report_${year}_${month}.csv`;
             link.click();
+        }
+        
+        // --- Modal Helpers ---
+        function showMessage(message) {
+            const messageText = el('messageText');
+            const messageActions = el('messageActions');
+            messageText.textContent = message;
+            messageActions.innerHTML = `<button id="messageOkBtn" class="bg-indigo-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-indigo-700">OK</button>`;
+            el('messageModal').classList.remove('hidden');
+            el('messageOkBtn').onclick = () => el('messageModal').classList.add('hidden');
+        }
+
+        function showConfirmation(message, onConfirm) {
+            const messageText = el('messageText');
+            const messageActions = el('messageActions');
+            messageText.textContent = message;
+            messageActions.innerHTML = `
+                <button id="confirmYesBtn" class="bg-red-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-red-700">Yes</button>
+                <button id="confirmNoBtn" class="bg-gray-300 text-gray-800 font-semibold py-2 px-6 rounded-lg hover:bg-gray-400">Cancel</button>`;
+            el('messageModal').classList.remove('hidden');
+            el('confirmYesBtn').onclick = () => { onConfirm(); el('messageModal').classList.add('hidden'); };
+            el('confirmNoBtn').onclick = () => el('messageModal').classList.add('hidden');
         }
     </script>
 </body>
