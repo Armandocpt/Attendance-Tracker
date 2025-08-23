@@ -7,43 +7,21 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-        .modal {
-            transition: opacity 0.3s ease;
-        }
-        /* Simple spinner for loading state */
-        .spinner {
-            border: 4px solid rgba(0, 0, 0, 0.1);
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            border-left-color: #09f;
-            animation: spin 1s ease infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        /* Styles for active and inactive tabs */
-        .tab-btn.active {
-            border-bottom-color: #16a34a; /* green-600 */
-            color: #16a34a;
-        }
+        body { font-family: 'Inter', sans-serif; }
+        .modal { transition: opacity 0.3s ease; }
+        .spinner { border: 4px solid rgba(0, 0, 0, 0.1); width: 36px; height: 36px; border-radius: 50%; border-left-color: #09f; animation: spin 1s ease infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .tab-btn.active { border-bottom-color: #16a34a; color: #16a34a; }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800">
 
-    <!-- App Loading State -->
     <div id="app-loading" class="flex flex-col items-center justify-center h-screen">
         <div class="spinner"></div>
         <p class="mt-4 text-lg text-gray-600">Initializing App...</p>
     </div>
 
-    <!-- Main App Content (hidden by default) -->
     <div id="app-container" class="hidden">
-        <!-- Stationary Header -->
         <header class="sticky top-0 z-50 bg-green-600 shadow-lg">
             <div class="container mx-auto relative flex items-center justify-center text-center py-4 px-4 sm:px-6 lg:px-8">
                 <div class="absolute left-4 sm:left-6 lg:left-8 flex items-center space-x-3">
@@ -60,101 +38,34 @@
         </header>
 
         <main class="container mx-auto p-4 sm:p-6 lg:p-8">
-            <!-- Tab Navigation -->
             <div class="mb-8 border-b border-gray-300">
                 <nav class="flex space-x-8" aria-label="Tabs">
-                    <button id="tab-attendance" class="tab-btn active font-medium text-lg py-4 px-1 border-b-4 border-transparent hover:border-gray-400 hover:text-gray-600 transition">
-                        Attendance Tracker
-                    </button>
-                    <button id="tab-latecoming" class="tab-btn font-medium text-lg py-4 px-1 border-b-4 border-transparent hover:border-gray-400 hover:text-gray-600 transition">
-                        Late Coming
-                    </button>
+                    <button id="tab-attendance" class="tab-btn active font-medium text-lg py-4 px-1 border-b-4 border-transparent hover:border-gray-400 hover:text-gray-600 transition">My Private Tracker</button>
+                    <button id="tab-latecoming" class="tab-btn font-medium text-lg py-4 px-1 border-b-4 border-transparent hover:border-gray-400 hover:text-gray-600 transition">School Late Coming</button>
                 </nav>
             </div>
 
-            <!-- Tab Content -->
             <div id="content-attendance" class="tab-content">
-                <!-- All existing sections will go here -->
-                <div class="bg-white p-6 rounded-xl shadow-md mb-8 max-w-2xl mx-auto">
-                    <h2 class="text-2xl font-semibold mb-4">Class Details</h2>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label for="teacherName" class="block text-sm font-medium text-gray-700">Teacher Name</label>
-                            <input type="text" id="teacherName" placeholder="e.g., Mr. Smith" class="mt-1 block w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 transition">
-                        </div>
-                        <div>
-                            <label for="className" class="block text-sm font-medium text-gray-700">Class Name</label>
-                            <input type="text" id="className" placeholder="e.g., Grade 10B" class="mt-1 block w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 transition">
-                        </div>
-                        <div class="sm:col-span-2">
-                            <label for="subjectName" class="block text-sm font-medium text-gray-700">Subject Name</label>
-                            <input type="text" id="subjectName" placeholder="e.g., Mathematics" class="mt-1 block w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 transition">
-                        </div>
-                    </div>
-                    <div class="mt-6 text-right">
-                        <button id="saveDetailsBtn" class="bg-blue-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-300">
-                            Save Details
-                        </button>
-                    </div>
-                </div>
-
-                <div class="bg-white p-6 rounded-xl shadow-md mb-8 max-w-2xl mx-auto">
-                    <h2 class="text-2xl font-semibold mb-4">Download Reports</h2>
-                    <div class="flex flex-col sm:flex-row items-center gap-4">
-                        <label for="reportMonth" class="font-medium">Select Month:</label>
-                        <input type="month" id="reportMonth" class="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 transition">
-                        <button id="downloadReportBtn" class="bg-emerald-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition duration-300">
-                            Download Report
-                        </button>
-                    </div>
-                </div>
-
-                <div class="bg-white p-6 rounded-xl shadow-md mb-8 max-w-2xl mx-auto">
-                    <h2 class="text-2xl font-semibold mb-4">Add a New Learner</h2>
-                    <div class="flex flex-col sm:flex-row gap-4">
-                        <input type="text" id="learnerName" placeholder="Enter learner's full name" class="flex-grow p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
-                        <button id="addLearnerBtn" class="bg-indigo-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-300 ease-in-out transform hover:-translate-y-1">
-                            Add Learner
-                        </button>
-                    </div>
-                </div>
-
-                <div class="bg-white p-6 rounded-xl shadow-md mb-8 max-w-2xl mx-auto">
-                    <h2 class="text-2xl font-semibold mb-4">Bulk Upload Learners</h2>
-                    <div class="flex flex-col sm:flex-row gap-4">
-                        <input type="file" id="csvFileInput" accept=".csv" class="flex-grow p-2 border border-gray-300 rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
-                        <button id="bulkAddBtn" class="bg-teal-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 transition duration-300">
-                            Upload CSV
-                        </button>
-                    </div>
-                </div>
-
-                <div class="bg-white p-6 rounded-xl shadow-md mb-8 max-w-2xl mx-auto flex items-center justify-center gap-4">
-                     <h2 class="text-2xl font-semibold">Date:</h2>
-                     <input type="date" id="attendanceDate" class="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
-                </div>
-
-                <div id="learnersList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
-                 <div id="loading" class="text-center hidden">
-                    <p class="text-lg text-gray-600">Loading learners...</p>
-                </div>
+                <!-- All sections for the private attendance tracker will be injected here -->
             </div>
 
             <div id="content-latecoming" class="tab-content hidden">
                 <div class="bg-white p-6 rounded-xl shadow-md mb-8 max-w-4xl mx-auto">
-                    <h2 class="text-2xl font-semibold mb-4">Late Learners for Today</h2>
-                     <div class="flex items-center justify-center gap-4 mb-6">
-                         <h3 class="text-xl font-semibold">Date:</h3>
-                         <input type="date" id="lateDate" class="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 transition">
+                    <h2 class="text-2xl font-semibold mb-4">Record Late Learners</h2>
+                    <div class="flex flex-col sm:flex-row items-center gap-4 mb-6 bg-gray-50 p-4 rounded-lg">
+                         <label for="classSelector" class="text-xl font-semibold">Select Class:</label>
+                         <select id="classSelector" class="flex-grow p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 transition">
+                            <option value="">-- Loading Classes --</option>
+                         </select>
                     </div>
                     <div id="lateLearnersList" class="space-y-3">
-                        <!-- Late learners will be listed here -->
+                        <p class="text-center text-gray-500">Please select a class to see the learners.</p>
                     </div>
                 </div>
             </div>
         </main>
         
-        <!-- Modals -->
+        <!-- All Modals -->
         <div id="historyModal" class="modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 p-4">
             <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-full overflow-y-auto">
                 <div class="p-6 border-b border-gray-200 sticky top-0 bg-white">
@@ -177,11 +88,10 @@
     <script type="module">
         // --- Firebase Imports ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, collection, addDoc, onSnapshot, setDoc, getDoc, deleteDoc, query, where, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, collection, addDoc, onSnapshot, setDoc, getDoc, deleteDoc, query, where, getDocs, writeBatch, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- Firebase & App Config ---
-        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
         const firebaseConfig = {
             apiKey: "AIzaSyDaySiKZA6PrEgpxBw-v2pngSSBwYZpqUY",
             authDomain: "attendance-tracker-825cc.firebaseapp.com",
@@ -192,7 +102,7 @@
             measurementId: "G-PQZBDQN0GL"
         };
         
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-attendance-app';
+        const appId = 'default-attendance-app'; // Use a consistent app ID
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
@@ -201,47 +111,32 @@
         // --- UI Elements ---
         const el = (id) => document.getElementById(id);
         const appLoading = el('app-loading'), appContainer = el('app-container');
-        const teacherNameInput = el('teacherName'), classNameInput = el('className'), subjectNameInput = el('subjectName');
-        const saveDetailsBtn = el('saveDetailsBtn');
-        const displayTeacherName = el('displayTeacherName'), displayClassName = el('displayClassName'), displaySubjectName = el('displaySubjectName');
-        const addLearnerBtn = el('addLearnerBtn'), learnerNameInput = el('learnerName'), learnersList = el('learnersList');
-        const attendanceDate = el('attendanceDate'), loading = el('loading');
-        const historyModal = el('historyModal'), closeModalBtn = el('closeModalBtn'), modalTitle = el('modalTitle'), modalBody = el('modalBody');
-        const messageModal = el('messageModal'), messageText = el('messageText'), messageActions = el('messageActions');
-        const noteModal = el('noteModal'), noteModalTitle = el('noteModalTitle'), attendanceNoteInput = el('attendanceNoteInput'), cancelNoteBtn = el('cancelNoteBtn'), saveNoteBtn = el('saveNoteBtn');
-        const reportMonthInput = el('reportMonth'), downloadReportBtn = el('downloadReportBtn');
-        const csvFileInput = el('csvFileInput'), bulkAddBtn = el('bulkAddBtn');
-        const tabAttendance = el('tab-attendance'), tabLateComing = el('tab-latecoming');
         const contentAttendance = el('content-attendance'), contentLateComing = el('content-latecoming');
-        const lateDate = el('lateDate'), lateLearnersList = el('lateLearnersList');
+        const tabAttendance = el('tab-attendance'), tabLateComing = el('tab-latecoming');
+        const classSelector = el('classSelector'), lateLearnersList = el('lateLearnersList');
+        const historyModal = el('historyModal'), closeModalBtn = el('closeModalBtn'), modalTitle = el('modalTitle'), modalBody = el('modalBody');
+        const noteModal = el('noteModal'), cancelNoteBtn = el('cancelNoteBtn');
 
         // --- App Initialization ---
-        // This is the most reliable way to handle Firebase auth state.
-        // It runs once on page load and handles both new sign-ins and existing sessions.
         onAuthStateChanged(auth, async (user) => {
             if (user) {
-                // If a user object exists, the app is ready to go.
-                console.log("Authentication successful. User ID:", user.uid);
                 userId = user.uid;
                 appLoading.classList.add('hidden');
                 appContainer.classList.remove('hidden');
-                loadClassDetails();
-                loadLearners();
-                loadLateLearners();
+                
+                // Setup both tabs
+                setupPrivateTracker();
+                setupLateComingTracker();
+
             } else {
-                // If no user exists, it's the first visit. Attempt to sign in anonymously.
-                // onAuthStateChanged will run *again* after this completes successfully.
-                console.log("No user found. Attempting anonymous sign-in...");
                 try {
-                    // Since a custom firebaseConfig is provided, always use anonymous sign-in.
                     await signInAnonymously(auth);
                 } catch (error) {
                     console.error("Error during initial sign-in:", error);
-                    appLoading.innerHTML = `<p class="text-red-500">Could not connect to the database. Please check your Firebase setup and security rules.</p>`;
+                    appLoading.innerHTML = `<p class="text-red-500">Could not connect. Check Firebase setup.</p>`;
                 }
             }
         });
-
 
         // --- Tab Logic ---
         function switchTab(activeTab) {
@@ -258,73 +153,209 @@
         tabAttendance.addEventListener('click', () => switchTab('attendance'));
         tabLateComing.addEventListener('click', () => switchTab('latecoming'));
 
-        // --- Date Handling ---
-        function getFormattedDate(dateObj) {
-            return dateObj.toISOString().slice(0, 10);
-        }
-        const today = new Date();
-        attendanceDate.value = getFormattedDate(today);
-        lateDate.value = getFormattedDate(today);
-        reportMonthInput.value = today.toISOString().slice(0, 7);
-        attendanceDate.addEventListener('change', loadLearners);
-        lateDate.addEventListener('change', loadLateLearners);
+        // =====================================================================
+        // LATE COMING TRACKER (SHARED DATA)
+        // =====================================================================
+        async function setupLateComingTracker() {
+            const classesCol = collection(db, 'classes');
+            const snapshot = await getDocs(classesCol);
+            
+            if (snapshot.empty) {
+                classSelector.innerHTML = '<option value="">-- No classes found --</option>';
+                return;
+            }
 
-        // --- Firestore Path Helpers ---
-        const paths = {
+            const classes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a,b) => a.className.localeCompare(b.className));
+            classSelector.innerHTML = '<option value="">-- Select a Class --</option>';
+            classes.forEach(c => {
+                const option = document.createElement('option');
+                option.value = c.id;
+                option.textContent = c.className;
+                classSelector.appendChild(option);
+            });
+
+            classSelector.addEventListener('change', () => {
+                const classId = classSelector.value;
+                if (classId) {
+                    loadLearnersForClass(classId);
+                } else {
+                    lateLearnersList.innerHTML = '<p class="text-center text-gray-500">Please select a class to see the learners.</p>';
+                }
+            });
+        }
+
+        async function loadLearnersForClass(classId) {
+            lateLearnersList.innerHTML = '<p class="text-center text-gray-500">Loading learners...</p>';
+            const learnersCol = collection(db, `classes/${classId}/learners`);
+            const snapshot = await getDocs(learnersCol);
+
+            if (snapshot.empty) {
+                lateLearnersList.innerHTML = '<p class="text-center text-gray-500">No learners found for this class.</p>';
+                return;
+            }
+
+            const learners = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a,b) => a.name.localeCompare(b.name));
+            lateLearnersList.innerHTML = learners.map(learner => `
+                <div class="bg-gray-50 p-4 rounded-lg flex flex-col sm:flex-row justify-between items-center" data-learner-id="${learner.id}" data-learner-name="${learner.name}" data-class-id="${classId}">
+                    <span class="font-bold text-lg mb-2 sm:mb-0">${learner.name}</span>
+                    <button class="mark-late-btn bg-yellow-500 text-white font-semibold py-2 px-6 rounded-lg hover:bg-yellow-600 transition w-full sm:w-auto">Mark as Late</button>
+                </div>
+            `).join('');
+        }
+
+        lateLearnersList.addEventListener('click', (e) => {
+            if (e.target.classList.contains('mark-late-btn')) {
+                const container = e.target.closest('[data-learner-id]');
+                const { learnerId, learnerName, classId } = container.dataset;
+                const note = prompt(`Add an optional note for ${learnerName}:`);
+                
+                if (note !== null) { // Will be null if user clicks cancel
+                    recordLateComing(classId, learnerId, learnerName, note);
+                }
+            }
+        });
+
+        async function recordLateComing(classId, learnerId, learnerName, note) {
+            try {
+                const lateCol = collection(db, 'lateRecords');
+                await addDoc(lateCol, {
+                    classId,
+                    learnerId,
+                    learnerName,
+                    note: note || "No note provided",
+                    date: new Date().toISOString().slice(0, 10),
+                    timestamp: serverTimestamp(),
+                    recordedBy: userId
+                });
+                alert(`${learnerName} has been recorded as late.`);
+            } catch (error) {
+                console.error("Error recording late coming:", error);
+                alert("Failed to record late coming. Please try again.");
+            }
+        }
+
+
+        // =====================================================================
+        // PRIVATE ATTENDANCE TRACKER (INDIVIDUAL TEACHER DATA)
+        // =====================================================================
+        function setupPrivateTracker() {
+            // Inject the HTML for the private tracker into its container
+            contentAttendance.innerHTML = `
+                <div class="bg-white p-6 rounded-xl shadow-md mb-8 max-w-2xl mx-auto">
+                    <h2 class="text-2xl font-semibold mb-4">My Class Details</h2>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div><label for="teacherName" class="block text-sm font-medium text-gray-700">My Name</label><input type="text" id="teacherName" class="mt-1 block w-full p-3 border rounded-lg"></div>
+                        <div><label for="className" class="block text-sm font-medium text-gray-700">My Class Name</label><input type="text" id="className" class="mt-1 block w-full p-3 border rounded-lg"></div>
+                        <div class="sm:col-span-2"><label for="subjectName" class="block text-sm font-medium text-gray-700">My Subject</label><input type="text" id="subjectName" class="mt-1 block w-full p-3 border rounded-lg"></div>
+                    </div>
+                    <div class="mt-6 text-right"><button id="saveDetailsBtn" class="bg-blue-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-blue-700">Save Details</button></div>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md mb-8 max-w-2xl mx-auto">
+                    <h2 class="text-2xl font-semibold mb-4">Download My Reports</h2>
+                    <div class="flex flex-col sm:flex-row items-center gap-4">
+                        <label for="reportMonth" class="font-medium">Select Month:</label>
+                        <input type="month" id="reportMonth" class="p-3 border rounded-lg">
+                        <button id="downloadReportBtn" class="bg-emerald-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-emerald-700">Download Report</button>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md mb-8 max-w-2xl mx-auto">
+                    <h2 class="text-2xl font-semibold mb-4">Add a New Learner to My List</h2>
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <input type="text" id="learnerName" class="flex-grow p-3 border rounded-lg">
+                        <button id="addLearnerBtn" class="bg-indigo-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-indigo-700">Add Learner</button>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md mb-8 max-w-2xl mx-auto">
+                    <h2 class="text-2xl font-semibold mb-4">Bulk Upload My Learners</h2>
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <input type="file" id="csvFileInput" accept=".csv" class="flex-grow p-2 border rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-indigo-50 hover:file:bg-indigo-100">
+                        <button id="bulkAddBtn" class="bg-teal-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-teal-700">Upload CSV</button>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md mb-8 max-w-2xl mx-auto flex items-center justify-center gap-4">
+                     <h2 class="text-2xl font-semibold">Date:</h2>
+                     <input type="date" id="attendanceDate" class="p-3 border rounded-lg">
+                </div>
+                <div id="learnersList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+                <div id="loading" class="text-center hidden"><p class="text-lg">Loading...</p></div>
+            `;
+            // Re-bind event listeners for the newly injected elements
+            bindPrivateTrackerEvents();
+        }
+
+        function bindPrivateTrackerEvents() {
+            // This function is necessary because the elements are added dynamically
+            el('saveDetailsBtn').addEventListener('click', savePrivateClassDetails);
+            el('addLearnerBtn').addEventListener('click', addPrivateLearner);
+            el('bulkAddBtn').addEventListener('click', () => {
+                const file = el('csvFileInput').files[0];
+                if (!file) return alert("Please select a CSV file.");
+                const reader = new FileReader();
+                reader.onload = (e) => bulkAddPrivateLearners(e.target.result.split(/\r?\n/).map(n => n.trim()).filter(Boolean));
+                reader.readAsText(file);
+            });
+            el('learnersList').addEventListener('click', handlePrivateLearnerClick);
+            el('downloadReportBtn').addEventListener('click', generatePrivateReport);
+            el('attendanceDate').value = new Date().toISOString().slice(0, 10);
+            el('reportMonth').value = new Date().toISOString().slice(0, 7);
+            el('attendanceDate').addEventListener('change', loadPrivateLearners);
+        }
+
+        // All the original functions, now renamed to be specific to the private tracker
+        const privatePaths = {
             learners: () => collection(db, `/artifacts/${appId}/users/${userId}/learners`),
             attendance: () => collection(db, `/artifacts/${appId}/users/${userId}/attendance`),
             classDetails: () => doc(db, `/artifacts/${appId}/users/${userId}/settings/classDetails`)
         };
 
-        // --- Core Functions (unchanged logic, just using path helpers) ---
-        async function saveClassDetails() {
-            const details = { teacherName: teacherNameInput.value.trim(), className: classNameInput.value.trim(), subjectName: subjectNameInput.value.trim() };
-            try { await setDoc(paths.classDetails(), details); showMessage("Details saved!"); } 
-            catch (e) { console.error(e); showMessage("Failed to save details."); }
+        async function savePrivateClassDetails() {
+            const details = { teacherName: el('teacherName').value.trim(), className: el('className').value.trim(), subjectName: el('subjectName').value.trim() };
+            try { await setDoc(privatePaths.classDetails(), details); alert("Details saved!"); } 
+            catch (e) { console.error(e); alert("Failed to save details."); }
         }
 
         function loadClassDetails() {
-            onSnapshot(paths.classDetails(), (doc) => {
+            onSnapshot(privatePaths.classDetails(), (doc) => {
                 const d = doc.exists() ? doc.data() : {};
-                teacherNameInput.value = d.teacherName || '';
-                classNameInput.value = d.className || '';
-                subjectNameInput.value = d.subjectName || '';
-                displayTeacherName.textContent = d.teacherName || '[Teacher]';
-                displayClassName.textContent = d.className || '[Class]';
-                displaySubjectName.textContent = d.subjectName || '[Subject]';
+                el('teacherName').value = d.teacherName || '';
+                el('className').value = d.className || '';
+                el('subjectName').value = d.subjectName || '';
+                el('displayTeacherName').textContent = d.teacherName || '[Teacher]';
+                el('displayClassName').textContent = d.className || '[Class]';
+                el('displaySubjectName').textContent = d.subjectName || '[Subject]';
             });
         }
 
-        async function addLearner() {
-            const name = learnerNameInput.value.trim();
-            if (!name) return showMessage("Learner name is empty.");
-            try { await addDoc(paths.learners(), { name, createdAt: new Date() }); learnerNameInput.value = ''; } 
-            catch (e) { console.error(e); showMessage("Error adding learner."); }
+        async function addPrivateLearner() {
+            const name = el('learnerName').value.trim();
+            if (!name) return alert("Learner name is empty.");
+            try { await addDoc(privatePaths.learners(), { name, createdAt: new Date() }); el('learnerName').value = ''; } 
+            catch (e) { console.error(e); alert("Error adding learner."); }
         }
-
-        async function bulkAddLearners(names) {
-            if (!names || names.length === 0) return showMessage("No names found.");
+        
+        async function bulkAddPrivateLearners(names) {
+            if (!names || names.length === 0) return alert("No names found.");
             const batch = writeBatch(db);
-            names.forEach(name => batch.set(doc(paths.learners()), { name, createdAt: new Date() }));
-            try { await batch.commit(); showMessage(`Added ${names.length} learners.`); csvFileInput.value = ''; } 
-            catch (e) { console.error(e); showMessage("Bulk upload failed."); }
+            names.forEach(name => batch.set(doc(privatePaths.learners()), { name, createdAt: new Date() }));
+            try { await batch.commit(); alert(`Added ${names.length} learners.`); el('csvFileInput').value = ''; } 
+            catch (e) { console.error(e); alert("Bulk upload failed."); }
         }
 
-        function loadLearners() {
-            loading.classList.remove('hidden');
-            learnersList.innerHTML = '';
-            onSnapshot(query(paths.learners()), async (snapshot) => {
-                loading.classList.add('hidden');
-                if (snapshot.empty) return learnersList.innerHTML = '<p class="text-center col-span-full">No learners added yet.</p>';
+        function loadPrivateLearners() {
+            el('loading').classList.remove('hidden');
+            el('learnersList').innerHTML = '';
+            onSnapshot(query(privatePaths.learners()), async (snapshot) => {
+                el('loading').classList.add('hidden');
+                if (snapshot.empty) return el('learnersList').innerHTML = '<p class="text-center col-span-full">No learners added yet.</p>';
                 const learners = snapshot.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => a.name.localeCompare(b.name));
-                const attendancePromises = learners.map(l => getAttendanceForDate(l.id, attendanceDate.value));
+                const attendancePromises = learners.map(l => getPrivateAttendanceForDate(l.id, el('attendanceDate').value));
                 const attendanceRecords = await Promise.all(attendancePromises);
-                learnersList.innerHTML = learners.map((learner, i) => createLearnerCardHTML(learner, attendanceRecords[i])).join('');
+                el('learnersList').innerHTML = learners.map((learner, i) => createPrivateLearnerCardHTML(learner, attendanceRecords[i])).join('');
             });
         }
 
-        function createLearnerCardHTML(learner, attendance) {
-            const status = attendance?.status || 'Not Marked';
+        function createPrivateLearnerCardHTML(learner, attendance) {
+             const status = attendance?.status || 'Not Marked';
             const note = attendance?.note || '';
             let statusColorClass = 'text-gray-500';
             if (status === 'Present') statusColorClass = 'text-green-600';
@@ -350,117 +381,66 @@
                     </div>
                 </div>`;
         }
-
-        async function getAttendanceForDate(learnerId, date) {
-            const attendanceId = `${learnerId}_${date}`;
-            const docRef = doc(paths.attendance(), attendanceId);
+        
+        async function getPrivateAttendanceForDate(learnerId, date) {
+            const docRef = doc(privatePaths.attendance(), `${learnerId}_${date}`);
             const docSnap = await getDoc(docRef);
             return docSnap.exists() ? {id: docSnap.id, ...docSnap.data()} : null;
         }
 
-        async function setAttendance(learnerId, status, date, note = '') {
-            const attendanceId = `${learnerId}_${date}`;
-            const docRef = doc(paths.attendance(), attendanceId);
+        async function setPrivateAttendance(learnerId, status, date, note = '') {
+            const docRef = doc(privatePaths.attendance(), `${learnerId}_${date}`);
             try {
                 await setDoc(docRef, { learnerId, date, status, note, updatedAt: new Date() });
-                loadLearners();
-                if (status === 'Late') loadLateLearners();
+                loadPrivateLearners();
             } catch (e) { console.error("Error setting attendance: ", e); }
         }
-        
-        async function deleteLearner(learnerId) {
+
+        async function deletePrivateLearner(learnerId) {
             try {
-                await deleteDoc(doc(paths.learners(), learnerId));
-                const q = query(paths.attendance(), where("learnerId", "==", learnerId));
+                await deleteDoc(doc(privatePaths.learners(), learnerId));
+                const q = query(privatePaths.attendance(), where("learnerId", "==", learnerId));
                 const snapshot = await getDocs(q);
                 const batch = writeBatch(db);
                 snapshot.forEach(d => batch.delete(d.ref));
                 await batch.commit();
-            } catch (e) { console.error("Error deleting learner: ", e); showMessage("Error deleting learner."); }
+            } catch (e) { console.error("Error deleting learner: ", e); alert("Error deleting learner."); }
         }
-
-        // --- Late Comers Logic ---
-        async function loadLateLearners() {
-            const date = lateDate.value;
-            const q = query(paths.attendance(), where("date", "==", date), where("status", "==", "Late"));
-            onSnapshot(q, async (snapshot) => {
-                if (snapshot.empty) {
-                    lateLearnersList.innerHTML = '<p class="text-center text-gray-500">No late learners recorded for this date.</p>';
-                    return;
-                }
-                const learnerIds = snapshot.docs.map(d => d.data().learnerId);
-                const learnerDocs = await Promise.all(learnerIds.map(id => getDoc(doc(paths.learners(), id))));
-                const learnersMap = new Map(learnerDocs.map(d => [d.id, d.data()?.name || 'Unknown']));
-                
-                lateLearnersList.innerHTML = snapshot.docs.map(d => {
-                    const record = d.data();
-                    return `
-                        <div class="bg-gray-50 p-4 rounded-lg flex justify-between items-center">
-                            <span class="font-bold text-lg">${learnersMap.get(record.learnerId)}</span>
-                            <span class="text-sm text-gray-600">${record.note ? `Note: ${record.note}` : 'No note'}</span>
-                        </div>`;
-                }).join('');
-            });
-        }
-
-        // --- Event Listeners ---
-        saveDetailsBtn.addEventListener('click', saveClassDetails);
-        addLearnerBtn.addEventListener('click', addLearner);
-        learnerNameInput.addEventListener('keypress', (e) => e.key === 'Enter' && addLearner());
-        bulkAddBtn.addEventListener('click', () => {
-            const file = csvFileInput.files[0];
-            if (!file) return showMessage("Please select a CSV file.");
-            const reader = new FileReader();
-            reader.onload = (e) => bulkAddLearners(e.target.result.split(/\r?\n/).map(n => n.trim()).filter(Boolean));
-            reader.readAsText(file);
-        });
-        learnersList.addEventListener('click', (e) => {
+        
+        function handlePrivateLearnerClick(e) {
             const card = e.target.closest('[data-id]');
             if (!card) return;
             const learnerId = card.dataset.id;
             const learnerName = card.querySelector('h3').textContent;
-            const date = attendanceDate.value;
+            const date = el('attendanceDate').value;
 
             if (e.target.matches('.status-btn')) {
                 const status = e.target.dataset.status;
-                if (status === 'Absent' || status === 'Late') openNoteModal(learnerId, status, date, learnerName);
-                else setAttendance(learnerId, status, date);
+                if (status === 'Absent' || status === 'Late') openPrivateNoteModal(learnerId, status, date, learnerName);
+                else setPrivateAttendance(learnerId, status, date);
             } else if (e.target.matches('.view-history-btn')) {
-                openHistoryModal(learnerId, learnerName);
+                openPrivateHistoryModal(learnerId, learnerName);
             } else if (e.target.matches('.delete-learner-btn')) {
-                showConfirmation('Delete this learner and all their records?', () => deleteLearner(learnerId));
+                if (confirm('Delete this learner and all their records?')) deletePrivateLearner(learnerId);
             }
-        });
+        }
         
-        // --- Modals ---
-        function showMessage(message) {
-            messageText.textContent = message;
-            messageActions.innerHTML = `<button id="messageOkBtn" class="bg-indigo-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-indigo-700">OK</button>`;
-            el('messageOkBtn').onclick = () => messageModal.classList.add('hidden');
-            messageModal.classList.remove('hidden');
-        }
-        function showConfirmation(message, onConfirm) {
-            messageText.textContent = message;
-            messageActions.innerHTML = `<button id="confirmYesBtn" class="bg-red-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-red-700">Yes</button><button id="confirmNoBtn" class="bg-gray-300 text-gray-800 font-semibold py-2 px-6 rounded-lg hover:bg-gray-400">Cancel</button>`;
-            messageModal.classList.remove('hidden');
-            el('confirmYesBtn').onclick = () => { onConfirm(); messageModal.classList.add('hidden'); };
-            el('confirmNoBtn').onclick = () => messageModal.classList.add('hidden');
-        }
-        function openNoteModal(learnerId, status, date, learnerName) {
-            noteModalTitle.textContent = `Add Note for ${learnerName} (${status})`;
-            attendanceNoteInput.value = '';
+        function openPrivateNoteModal(learnerId, status, date, learnerName) {
+            el('noteModalTitle').textContent = `Add Note for ${learnerName} (${status})`;
+            el('attendanceNoteInput').value = '';
             noteModal.classList.remove('hidden');
-            saveNoteBtn.onclick = () => {
-                setAttendance(learnerId, status, date, attendanceNoteInput.value.trim());
+            el('saveNoteBtn').onclick = () => {
+                setPrivateAttendance(learnerId, status, date, el('attendanceNoteInput').value.trim());
                 noteModal.classList.add('hidden');
             };
         }
         cancelNoteBtn.addEventListener('click', () => noteModal.classList.add('hidden'));
-        async function openHistoryModal(learnerId, learnerName) {
+
+        async function openPrivateHistoryModal(learnerId, learnerName) {
             modalTitle.textContent = `History for ${learnerName}`;
             modalBody.innerHTML = '<p>Loading...</p>';
             historyModal.classList.remove('hidden');
-            const q = query(paths.attendance(), where("learnerId", "==", learnerId));
+            const q = query(privatePaths.attendance(), where("learnerId", "==", learnerId));
             onSnapshot(q, (snapshot) => {
                 if (snapshot.empty) return modalBody.innerHTML = '<p>No records found.</p>';
                 const records = snapshot.docs.map(d => d.data()).sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -475,30 +455,28 @@
             });
         }
         closeModalBtn.addEventListener('click', () => historyModal.classList.add('hidden'));
-        historyModal.addEventListener('click', (e) => e.target === historyModal && historyModal.classList.add('hidden'));
-
-        // --- Report Generation ---
-        async function generateReport() {
-            const monthYear = reportMonthInput.value;
-            if (!monthYear) return showMessage("Please select a month.");
+        
+        async function generatePrivateReport() {
+            const monthYear = el('reportMonth').value;
+            if (!monthYear) return alert("Please select a month.");
             const [year, month] = monthYear.split('-');
             const startDate = `${year}-${month}-01`;
             const lastDay = new Date(year, month, 0).getDate();
             const endDate = `${year}-${month}-${String(lastDay).padStart(2, '0')}`;
             
-            const learnersSnap = await getDocs(paths.learners());
+            const learnersSnap = await getDocs(privatePaths.learners());
             const learnersMap = new Map(learnersSnap.docs.map(d => [d.id, d.data().name]));
 
-            const q = query(paths.attendance(), where("date", ">=", startDate), where("date", "<=", endDate));
+            const q = query(privatePaths.attendance(), where("date", ">=", startDate), where("date", "<=", endDate));
             const attendanceSnap = await getDocs(q);
-            if (attendanceSnap.empty) return showMessage("No records for this month.");
+            if (attendanceSnap.empty) return alert("No records for this month.");
 
             let csvContent = "data:text/csv;charset=utf-8,Learner Name,Date,Status,Note\r\n";
             const records = attendanceSnap.docs.map(d => d.data()).sort((a,b) => new Date(a.date) - new Date(b.date) || (learnersMap.get(a.learnerId) || '').localeCompare(learnersMap.get(b.learnerId) || ''));
             records.forEach(r => {
                 const name = learnersMap.get(r.learnerId) || "Unknown";
                 const note = r.note ? r.note.replace(/,/g, ";") : "";
-                csvContent += `${name},${r.date},${r.status},${note}\r.n`;
+                csvContent += `${name},${r.date},${r.status},${note}\r\n`;
             });
 
             const link = document.createElement("a");
@@ -506,7 +484,6 @@
             link.download = `attendance_report_${year}_${month}.csv`;
             link.click();
         }
-        downloadReportBtn.addEventListener('click', generateReport);
     </script>
 </body>
 </html>
