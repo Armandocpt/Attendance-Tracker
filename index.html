@@ -123,21 +123,23 @@
     <script type="module">
         // --- Firebase Imports ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, collection, addDoc, onSnapshot, setDoc, getDoc, deleteDoc, query, where, getDocs, writeBatch, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- Firebase & App Config ---
-        const firebaseConfig = {
-            apiKey: "AIzaSyCbhU9Y9GCDhm97fJ7LwrKI3mpjPt4ilC4",
-            authDomain: "attendance-tracker-825cc.firebaseapp.com",
-            projectId: "attendance-tracker-825cc",
-            storageBucket: "attendance-tracker-825cc.appspot.com",
-            messagingSenderId: "539619569987",
-            appId: "1:539619569987:web:15e9e25a8a7db639d63ff6",
-            measurementId: "G-PQZBDQN0GL"
-        };
+        const firebaseConfig = typeof __firebase_config !== 'undefined' 
+            ? JSON.parse(__firebase_config) 
+            : {
+                apiKey: "AIzaSyCbhU9Y9GCDhm97fJ7LwrKI3mpjPt4ilC4",
+                authDomain: "attendance-tracker-825cc.firebaseapp.com",
+                projectId: "attendance-tracker-825cc",
+                storageBucket: "attendance-tracker-825cc.appspot.com",
+                messagingSenderId: "539619569987",
+                appId: "1:539619569987:web:15e9e25a8a7db639d63ff6",
+                measurementId: "G-PQZBDQN0GL"
+            };
         
-        const appId = 'default-attendance-app';
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-attendance-app';
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
@@ -153,7 +155,6 @@
                 el('app-loading').classList.add('hidden');
                 el('app-container').classList.remove('hidden');
                 
-                // Setup all tabs
                 setupPrivateTracker();
                 setupLateComingTracker();
                 setupDashboard();
@@ -161,10 +162,14 @@
 
             } else {
                 try {
-                    await signInAnonymously(auth);
+                    if (typeof __firebase_config !== 'undefined' && typeof __initial_auth_token !== 'undefined') {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
                 } catch (error) {
                     console.error("Error during initial sign-in:", error);
-                    el('app-loading').innerHTML = `<p class="text-red-500">Could not connect. Check Firebase setup.</p>`;
+                    el('app-loading').innerHTML = `<p class="text-red-500">Could not connect. Check Firebase setup and API key restrictions.</p>`;
                 }
             }
         });
@@ -188,6 +193,36 @@
                     el('classDetailsHeader').style.visibility = tabs[key].header ? 'visible' : 'hidden';
                 });
             });
+        }
+
+        // --- Error Handling ---
+        let securityRuleAlertShown = false;
+        function handlePermissionError(error, context) {
+            console.error(`Permission Denied in ${context}:`, error);
+            if (!securityRuleAlertShown) {
+                securityRuleAlertShown = true; // Prevent multiple alerts
+                alert("SECURITY RULE ERROR:\nThe app is being blocked by your database security rules. Please go to your Firebase project -> Firestore -> Rules and paste the following rules to fix this:\n\n" + getSecureRules());
+            }
+        }
+
+        function getSecureRules() {
+            return `rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Rule 1: Secures private data
+    match /artifacts/{appId}/users/{userId}/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    // Rule 2: Allows reading the list of shared classes and learners
+    match /classes/{classId}/{document=**} {
+      allow read: if request.auth != null;
+    }
+    // Rule 3: Allows reading and writing to the shared late records
+    match /lateRecords/{recordId} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}`;
         }
 
         // =====================================================================
@@ -214,29 +249,23 @@
             onSnapshot(q, (snapshot) => {
                 const records = snapshot.docs.map(doc => doc.data());
                 
-                const monthlyCounts = records.reduce((acc, rec) => {
-                    acc[rec.learnerName] = (acc[rec.learnerName] || 0) + 1;
-                    return acc;
-                }, {});
+                const monthlyCounts = records.reduce((acc, rec) => { acc[rec.learnerName] = (acc[rec.learnerName] || 0) + 1; return acc; }, {});
                 const topMonthly = Object.entries(monthlyCounts).sort((a,b) => b[1] - a[1]).slice(0, 10);
                 renderTopList(topLateMonthEl, topMonthly, 'month');
 
                 const weeklyRecords = records.filter(r => r.date >= startOfWeek);
-                const weeklyCounts = weeklyRecords.reduce((acc, rec) => {
-                    acc[rec.learnerName] = (acc[rec.learnerName] || 0) + 1;
-                    return acc;
-                }, {});
+                const weeklyCounts = weeklyRecords.reduce((acc, rec) => { acc[rec.learnerName] = (acc[rec.learnerName] || 0) + 1; return acc; }, {});
                 const topWeekly = Object.entries(weeklyCounts).sort((a,b) => b[1] - a[1]).slice(0, 10);
                 renderTopList(topLateWeekEl, topWeekly, 'week');
 
                 const dayCounts = [0, 0, 0, 0, 0]; // Mon-Fri
                 records.forEach(rec => {
                     const day = new Date(rec.date + 'T00:00:00').getDay();
-                    if (day >= 1 && day <= 5) { // Only count Monday (1) to Friday (5)
-                        dayCounts[day - 1]++;
-                    }
+                    if (day >= 1 && day <= 5) { dayCounts[day - 1]++; }
                 });
                 renderDayChart(lateByDayChartEl, dayCounts);
+            }, (error) => {
+                if(error.code === 'permission-denied') handlePermissionError(error, 'Dashboard');
             });
         }
 
@@ -311,7 +340,8 @@
                     }
                 });
             } catch (error) {
-                console.error("Error loading classes:", error);
+                if(error.code === 'permission-denied') handlePermissionError(error, 'Late Coming Class List');
+                else console.error("Error loading classes:", error);
                 lateClassSelector.innerHTML = '<option value="">-- Error Loading Classes --</option>';
             }
         }
@@ -337,8 +367,9 @@
                     </div>
                 `).join('');
             } catch (error) {
-                 console.error("Error loading learners:", error);
-                 container.innerHTML = '<p class="text-center text-red-500">Error loading learners.</p>';
+                if(error.code === 'permission-denied') handlePermissionError(error, 'Late Coming Learner List');
+                else console.error("Error loading learners:", error);
+                container.innerHTML = '<p class="text-center text-red-500">Error loading learners.</p>';
             }
         }
         
@@ -356,19 +387,14 @@
         async function recordLateComing(classId, learnerId, learnerName, note) {
             try {
                 const lateCol = collection(db, 'lateRecords');
-                await addDoc(lateCol, {
-                    classId,
-                    learnerId,
-                    learnerName,
-                    note: note || "No note provided",
-                    date: new Date().toISOString().slice(0, 10),
-                    timestamp: serverTimestamp(),
-                    recordedBy: userId
-                });
+                await addDoc(lateCol, { classId, learnerId, learnerName, note: note || "No note provided", date: new Date().toISOString().slice(0, 10), timestamp: serverTimestamp(), recordedBy: userId });
                 showMessage(`${learnerName} has been recorded as late.`);
             } catch (error) {
-                console.error("Error recording late coming:", error);
-                showMessage("Failed to record late coming. Please try again.");
+                if(error.code === 'permission-denied') handlePermissionError(error, 'Recording Late Learner');
+                else {
+                    console.error("Error recording late coming:", error);
+                    showMessage("Failed to record late coming. Please try again.");
+                }
             }
         }
 
@@ -404,10 +430,17 @@
                             </div>
                         `;
                     }).join('');
+                }, (error) => {
+                    if(error.code === 'permission-denied') handlePermissionError(error, 'Daily Late List');
+                    else {
+                        console.error("Error loading late records:", error);
+                        el('recordedLateList').innerHTML = '<p class="text-center text-red-500">Could not load late records.</p>';
+                    }
                 });
             } catch (error) {
-                console.error("Error loading late records:", error);
-                el('recordedLateList').innerHTML = '<p class="text-center text-red-500">Could not load late records.</p>';
+                if(error.code === 'permission-denied') handlePermissionError(error, 'Daily Late List Class Names');
+                else console.error("Error loading classes for late list:", error);
+                el('recordedLateList').innerHTML = '<p class="text-center text-red-500">Could not load class names.</p>';
             }
         }
         
@@ -529,7 +562,8 @@
                     }
                 });
             } catch (error) {
-                console.error("Error loading classes for private tracker:", error);
+                if(error.code === 'permission-denied') handlePermissionError(error, 'Private Tracker Class List');
+                else console.error("Error loading classes for private tracker:", error);
                 el('privateClassSelector').innerHTML = '<option value="">-- Error Loading --</option>';
             }
 
@@ -669,6 +703,8 @@
                     return `<li class="bg-gray-50 p-3 rounded-md"><div class="flex justify-between items-center"><span class="font-medium">${r.date}</span><span class="font-semibold ${color}">${r.status}</span></div>${r.note ? `<p class="text-sm text-gray-600 mt-1 pl-1 border-l-2 border-gray-300">Note: ${r.note}</p>` : ''}${sessionInfo}</li>`;
                 }).join('') + '</ul>';
                 el('modalBody').innerHTML = summaryHtml + historyHtml;
+            }, (error) => {
+                if(error.code === 'permission-denied') handlePermissionError(error, 'Private History');
             });
         }
         el('closeModalBtn').addEventListener('click', () => el('historyModal').classList.add('hidden'));
