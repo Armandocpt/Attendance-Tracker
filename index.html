@@ -58,8 +58,19 @@
                             <option value="">-- Loading Classes --</option>
                          </select>
                     </div>
-                    <div id="lateLearnersList" class="space-y-3">
+                    <div id="learnersToMarkList" class="space-y-3">
                         <p class="text-center text-gray-500">Please select a class to see the learners.</p>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl shadow-md mb-8 max-w-4xl mx-auto">
+                    <h2 class="text-2xl font-semibold mb-4">Daily Late Coming List</h2>
+                    <div class="flex items-center justify-center gap-4 mb-6">
+                         <h3 class="text-xl font-semibold">Date:</h3>
+                         <input type="date" id="lateListDate" class="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 transition">
+                    </div>
+                    <div id="recordedLateList" class="space-y-3">
+                        <!-- Late learners will be listed here -->
                     </div>
                 </div>
             </div>
@@ -113,7 +124,8 @@
         const appLoading = el('app-loading'), appContainer = el('app-container');
         const contentAttendance = el('content-attendance'), contentLateComing = el('content-latecoming');
         const tabAttendance = el('tab-attendance'), tabLateComing = el('tab-latecoming');
-        const classSelector = el('classSelector'), lateLearnersList = el('lateLearnersList');
+        const classSelector = el('classSelector'), learnersToMarkList = el('learnersToMarkList');
+        const lateListDate = el('lateListDate'), recordedLateList = el('recordedLateList');
         const historyModal = el('historyModal'), closeModalBtn = el('closeModalBtn'), modalTitle = el('modalTitle'), modalBody = el('modalBody');
         const noteModal = el('noteModal'), cancelNoteBtn = el('cancelNoteBtn');
 
@@ -156,54 +168,100 @@
         // =====================================================================
         // LATE COMING TRACKER (SHARED DATA)
         // =====================================================================
+        
+        // --- Helper function to provide correct security rules ---
+        function getSecureRules() {
+            return `rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Rule 1: Secures private data
+    match /artifacts/{appId}/users/{userId}/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    // Rule 2: Allows reading the list of shared classes and learners
+    match /classes/{classId}/{document=**} {
+      allow read: if request.auth != null;
+    }
+    // Rule 3: Allows reading and writing to the shared late records
+    match /lateRecords/{recordId} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}`;
+        }
+
         async function setupLateComingTracker() {
-            const classesCol = collection(db, 'classes');
-            const snapshot = await getDocs(classesCol);
-            
-            if (snapshot.empty) {
-                classSelector.innerHTML = '<option value="">-- No classes found --</option>';
-                return;
-            }
+            lateListDate.value = new Date().toISOString().slice(0, 10);
+            lateListDate.addEventListener('change', loadRecordedLateLearners);
+            loadRecordedLateLearners(); // Initial load for today
 
-            const classes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a,b) => a.className.localeCompare(b.className));
-            classSelector.innerHTML = '<option value="">-- Select a Class --</option>';
-            classes.forEach(c => {
-                const option = document.createElement('option');
-                option.value = c.id;
-                option.textContent = c.className;
-                classSelector.appendChild(option);
-            });
-
-            classSelector.addEventListener('change', () => {
-                const classId = classSelector.value;
-                if (classId) {
-                    loadLearnersForClass(classId);
-                } else {
-                    lateLearnersList.innerHTML = '<p class="text-center text-gray-500">Please select a class to see the learners.</p>';
+            try {
+                const classesCol = collection(db, 'classes');
+                const snapshot = await getDocs(classesCol);
+                
+                if (snapshot.empty) {
+                    classSelector.innerHTML = '<option value="">-- No classes found --</option>';
+                    return;
                 }
-            });
+
+                const classes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a,b) => a.className.localeCompare(b.className));
+                classSelector.innerHTML = '<option value="">-- Select a Class --</option>';
+                classes.forEach(c => {
+                    const option = document.createElement('option');
+                    option.value = c.id;
+                    option.textContent = c.className;
+                    classSelector.appendChild(option);
+                });
+
+                classSelector.addEventListener('change', () => {
+                    const classId = classSelector.value;
+                    if (classId) {
+                        loadLearnersForClass(classId);
+                    } else {
+                        learnersToMarkList.innerHTML = '<p class="text-center text-gray-500">Please select a class to see the learners.</p>';
+                    }
+                });
+            } catch (error) {
+                if (error.code === 'permission-denied') {
+                    alert("SECURITY RULE ERROR:\nThe app is not allowed to read the list of classes. Please go to your Firebase project -> Firestore -> Rules and paste the following rules:\n\n" + getSecureRules());
+                    classSelector.innerHTML = '<option value="">-- Permission Denied --</option>';
+                } else {
+                    console.error("Error loading classes:", error);
+                    classSelector.innerHTML = '<option value="">-- Error Loading Classes --</option>';
+                }
+            }
         }
 
         async function loadLearnersForClass(classId) {
-            lateLearnersList.innerHTML = '<p class="text-center text-gray-500">Loading learners...</p>';
-            const learnersCol = collection(db, `classes/${classId}/learners`);
-            const snapshot = await getDocs(learnersCol);
+            learnersToMarkList.innerHTML = '<p class="text-center text-gray-500">Loading learners...</p>';
+            try {
+                const learnersCol = collection(db, `classes/${classId}/learners`);
+                const snapshot = await getDocs(learnersCol);
 
-            if (snapshot.empty) {
-                lateLearnersList.innerHTML = '<p class="text-center text-gray-500">No learners found for this class.</p>';
-                return;
+                if (snapshot.empty) {
+                    learnersToMarkList.innerHTML = '<p class="text-center text-gray-500">No learners found for this class.</p>';
+                    return;
+                }
+
+                const learners = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a,b) => a.name.localeCompare(b.name));
+                learnersToMarkList.innerHTML = learners.map(learner => `
+                    <div class="bg-gray-50 p-4 rounded-lg flex flex-col sm:flex-row justify-between items-center" data-learner-id="${learner.id}" data-learner-name="${learner.name}" data-class-id="${classId}">
+                        <span class="font-bold text-lg mb-2 sm:mb-0">${learner.name}</span>
+                        <button class="mark-late-btn bg-yellow-500 text-white font-semibold py-2 px-6 rounded-lg hover:bg-yellow-600 transition w-full sm:w-auto">Mark as Late</button>
+                    </div>
+                `).join('');
+            } catch (error) {
+                 if (error.code === 'permission-denied') {
+                    alert("SECURITY RULE ERROR:\nThe app is not allowed to read learners for this class. Please go to your Firebase project -> Firestore -> Rules and paste the following rules:\n\n" + getSecureRules());
+                    learnersToMarkList.innerHTML = '<p class="text-center text-red-500">Permission Denied. Check security rules.</p>';
+                } else {
+                    console.error("Error loading learners:", error);
+                    learnersToMarkList.innerHTML = '<p class="text-center text-red-500">Error loading learners.</p>';
+                }
             }
-
-            const learners = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a,b) => a.name.localeCompare(b.name));
-            lateLearnersList.innerHTML = learners.map(learner => `
-                <div class="bg-gray-50 p-4 rounded-lg flex flex-col sm:flex-row justify-between items-center" data-learner-id="${learner.id}" data-learner-name="${learner.name}" data-class-id="${classId}">
-                    <span class="font-bold text-lg mb-2 sm:mb-0">${learner.name}</span>
-                    <button class="mark-late-btn bg-yellow-500 text-white font-semibold py-2 px-6 rounded-lg hover:bg-yellow-600 transition w-full sm:w-auto">Mark as Late</button>
-                </div>
-            `).join('');
         }
 
-        lateLearnersList.addEventListener('click', (e) => {
+        learnersToMarkList.addEventListener('click', (e) => {
             if (e.target.classList.contains('mark-late-btn')) {
                 const container = e.target.closest('[data-learner-id]');
                 const { learnerId, learnerName, classId } = container.dataset;
@@ -231,6 +289,47 @@
             } catch (error) {
                 console.error("Error recording late coming:", error);
                 alert("Failed to record late coming. Please try again.");
+            }
+        }
+
+        async function loadRecordedLateLearners() {
+            const date = lateListDate.value;
+            recordedLateList.innerHTML = '<p class="text-center text-gray-500">Loading late list...</p>';
+
+            try {
+                const classesSnap = await getDocs(collection(db, 'classes'));
+                const classesMap = new Map(classesSnap.docs.map(doc => [doc.id, doc.data().className]));
+
+                const q = query(collection(db, 'lateRecords'), where("date", "==", date));
+                onSnapshot(q, (snapshot) => {
+                    if (snapshot.empty) {
+                        recordedLateList.innerHTML = '<p class="text-center text-gray-500">No learners were recorded late on this date.</p>';
+                        return;
+                    }
+
+                    const records = snapshot.docs.map(doc => doc.data()).sort((a,b) => a.timestamp - b.timestamp);
+
+                    recordedLateList.innerHTML = records.map(record => {
+                        const className = classesMap.get(record.classId) || 'Unknown Class';
+                        return `
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <div class="flex justify-between items-center">
+                                    <span class="font-bold text-lg">${record.learnerName}</span>
+                                    <span class="text-sm font-medium text-gray-700">${className}</span>
+                                </div>
+                                ${record.note ? `<p class="text-sm text-gray-600 mt-1 pl-1 border-l-2 border-gray-300">Note: ${record.note}</p>` : ''}
+                            </div>
+                        `;
+                    }).join('');
+                });
+            } catch (error) {
+                 if (error.code === 'permission-denied') {
+                    alert("SECURITY RULE ERROR:\nThe app is not allowed to read the daily late list. Please go to your Firebase project -> Firestore -> Rules and paste the following rules:\n\n" + getSecureRules());
+                    recordedLateList.innerHTML = '<p class="text-center text-red-500">Permission Denied. Check security rules.</p>';
+                } else {
+                    console.error("Error loading late records:", error);
+                    recordedLateList.innerHTML = '<p class="text-center text-red-500">Could not load late records.</p>';
+                }
             }
         }
 
