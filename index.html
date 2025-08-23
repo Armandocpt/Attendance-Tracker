@@ -100,6 +100,10 @@
             </div>
         </main>
         
+        <footer class="text-center p-4 text-gray-500 text-xs">
+            App Version: 1.5
+        </footer>
+
         <!-- All Modals -->
         <div id="historyModal" class="modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 p-4">
             <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-full overflow-y-auto">
@@ -112,7 +116,7 @@
         </div>
         
         <div id="messageModal" class="modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 p-4">
-            <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm"><div class="p-6 text-center"><p id="messageText" class="text-lg mb-6"></p><div id="messageActions" class="flex justify-center gap-4"></div></div></div>
+            <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl"><div class="p-6 text-center"><div id="messageText" class="text-lg mb-6"></div><div id="messageActions" class="flex justify-center gap-4"></div></div></div>
         </div>
 
         <div id="noteModal" class="modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 p-4">
@@ -130,7 +134,7 @@
         const firebaseConfig = typeof __firebase_config !== 'undefined' 
             ? JSON.parse(__firebase_config) 
             : {
-                apiKey: "AIzaSyCbhU9Y9GCDhm97fJ7LwrKI3mpjPt4ilC4",
+                apiKey: "YOUR_NEW_API_KEY", // IMPORTANT: Replace with your new, restricted API key
                 authDomain: "attendance-tracker-825cc.firebaseapp.com",
                 projectId: "attendance-tracker-825cc",
                 storageBucket: "attendance-tracker-825cc.appspot.com",
@@ -201,12 +205,13 @@
             console.error(`Permission Denied in ${context}:`, error);
             if (!securityRuleAlertShown) {
                 securityRuleAlertShown = true; // Prevent multiple alerts
-                alert("SECURITY RULE ERROR:\nThe app is being blocked by your database security rules. Please go to your Firebase project -> Firestore -> Rules and paste the following rules to fix this:\n\n" + getSecureRules());
+                const rules = getSecureRules();
+                showMessage(rules, true);
             }
         }
 
         function getSecureRules() {
-            return `rules_version = '2';
+            const rules = `rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     // Rule 1: Secures private data
@@ -223,6 +228,8 @@ service cloud.firestore {
     }
   }
 }`;
+            // Use HTML entities to preserve indentation in the pre tag
+            return rules.replace(/</g, "&lt;").replace(/>/g, "&gt;");
         }
 
         // =====================================================================
@@ -710,10 +717,14 @@ service cloud.firestore {
         el('closeModalBtn').addEventListener('click', () => el('historyModal').classList.add('hidden'));
         
         // --- Modal Helpers ---
-        function showMessage(message) {
+        function showMessage(message, isSecurity = false) {
             const messageText = el('messageText');
             const messageActions = el('messageActions');
-            messageText.textContent = message;
+            if (isSecurity) {
+                messageText.innerHTML = `<div class="text-left"><p class="font-bold text-lg mb-2 text-red-600">SECURITY RULE ERROR:</p><p class="mb-4">The app is blocked by your database rules. Please update your Firebase project's Firestore Rules with the text below:</p><pre class="bg-gray-800 text-left text-white p-4 rounded-lg text-xs overflow-x-auto whitespace-pre-wrap">${message}</pre></div>`;
+            } else {
+                messageText.textContent = message;
+            }
             messageActions.innerHTML = `<button id="messageOkBtn" class="bg-indigo-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-indigo-700">OK</button>`;
             el('messageModal').classList.remove('hidden');
             el('messageOkBtn').onclick = () => el('messageModal').classList.add('hidden');
