@@ -27,7 +27,7 @@
                 <div>
                     <h1 class="text-3xl sm:text-4xl font-bold text-white">Classroom Manager</h1>
                     <p id="classDetailsHeader" class="text-md text-green-100 mt-2">
-                        <span id="displaySubjectName">[Subject]</span> | <span id="displayClassName">[Class]</span> | <span id="displayTeacherName">[Teacher]</span>
+                        <span id="displayClassName">[Select a Class]</span>
                     </p>
                 </div>
             </div>
@@ -38,7 +38,7 @@
             <main class="container mx-auto">
                 <div class="border-b border-gray-300">
                     <nav class="flex space-x-8 px-4 sm:px-6 lg:px-8" aria-label="Tabs">
-                        <button id="tab-attendance" class="tab-btn active font-medium text-lg py-4 px-1 border-b-4 border-transparent hover:border-gray-400 hover:text-gray-600 transition">My Private Tracker</button>
+                        <button id="tab-attendance" class="tab-btn active font-medium text-lg py-4 px-1 border-b-4 border-transparent hover:border-gray-400 hover:text-gray-600 transition">Attendance Tracker</button>
                         <button id="tab-latecoming" class="tab-btn font-medium text-lg py-4 px-1 border-b-4 border-transparent hover:border-gray-400 hover:text-gray-600 transition">School Late Coming</button>
                     </nav>
                 </div>
@@ -47,15 +47,39 @@
 
         <main class="container mx-auto p-4 sm:p-6 lg:p-8">
             <div id="content-attendance" class="tab-content">
-                <!-- All sections for the private attendance tracker will be injected here -->
+                <div class="bg-white p-6 rounded-xl shadow-md mb-8 max-w-4xl mx-auto">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                             <label for="privateClassSelector" class="text-xl font-semibold">Select Class:</label>
+                             <select id="privateClassSelector" class="w-full mt-2 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 transition">
+                                <option value="">-- Loading Classes --</option>
+                             </select>
+                        </div>
+                         <div class="bg-gray-50 p-4 rounded-lg">
+                             <h3 class="text-xl font-semibold">Date:</h3>
+                             <input type="date" id="attendanceDate" class="w-full mt-2 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 transition">
+                        </div>
+                    </div>
+                    <div class="border-t pt-6">
+                        <h2 class="text-2xl font-semibold mb-4">Session Details</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div><label for="teacherNameInput" class="block font-medium text-gray-700">Your Name</label><input type="text" id="teacherNameInput" placeholder="e.g., Mr. Smith" class="mt-1 block w-full p-3 border rounded-lg"></div>
+                            <div><label for="subjectInput" class="block font-medium text-gray-700">Subject</label><input type="text" id="subjectInput" placeholder="e.g., Mathematics" class="mt-1 block w-full p-3 border rounded-lg"></div>
+                            <div><label for="cycleDaySelect" class="block font-medium text-gray-700">Cycle Day</label><select id="cycleDaySelect" class="mt-1 block w-full p-3 border rounded-lg"></select></div>
+                            <div><label for="periodSelect" class="block font-medium text-gray-700">Period</label><select id="periodSelect" class="mt-1 block w-full p-3 border rounded-lg"></select></div>
+                        </div>
+                    </div>
+                </div>
+                <div id="learnersList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+                <div id="loading" class="text-center hidden"><p class="text-lg">Loading...</p></div>
             </div>
 
             <div id="content-latecoming" class="tab-content hidden">
                 <div class="bg-white p-6 rounded-xl shadow-md mb-8 max-w-4xl mx-auto">
                     <h2 class="text-2xl font-semibold mb-4">Record Late Learners</h2>
                     <div class="flex flex-col sm:flex-row items-center gap-4 mb-6 bg-gray-50 p-4 rounded-lg">
-                         <label for="classSelector" class="text-xl font-semibold">Select Class:</label>
-                         <select id="classSelector" class="flex-grow p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 transition">
+                         <label for="lateClassSelector" class="text-xl font-semibold">Select Class:</label>
+                         <select id="lateClassSelector" class="flex-grow p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 transition">
                             <option value="">-- Loading Classes --</option>
                          </select>
                     </div>
@@ -128,13 +152,16 @@
         const appLoading = el('app-loading'), appContainer = el('app-container');
         const contentAttendance = el('content-attendance'), contentLateComing = el('content-latecoming');
         const tabAttendance = el('tab-attendance'), tabLateComing = el('tab-latecoming');
-        const classSelector = el('classSelector'), learnersToMarkList = el('learnersToMarkList');
+        const privateClassSelector = el('privateClassSelector'), learnersList = el('learnersList'), loading = el('loading');
+        const lateClassSelector = el('lateClassSelector'), learnersToMarkList = el('learnersToMarkList');
         const lateListDate = el('lateListDate'), recordedLateList = el('recordedLateList');
         const historyModal = el('historyModal'), closeModalBtn = el('closeModalBtn'), modalTitle = el('modalTitle'), modalBody = el('modalBody');
         const messageModal = el('messageModal'), messageText = el('messageText'), messageActions = el('messageActions');
         const noteModal = el('noteModal'), cancelNoteBtn = el('cancelNoteBtn');
-        const classDetailsHeader = el('classDetailsHeader');
+        const classDetailsHeader = el('classDetailsHeader'), displayClassName = el('displayClassName');
         const exportLateListBtn = el('exportLateListBtn');
+        const attendanceDate = el('attendanceDate');
+        const teacherNameInput = el('teacherNameInput'), subjectInput = el('subjectInput'), cycleDaySelect = el('cycleDaySelect'), periodSelect = el('periodSelect');
 
         // --- App Initialization ---
         onAuthStateChanged(auth, async (user) => {
@@ -143,7 +170,6 @@
                 appLoading.classList.add('hidden');
                 appContainer.classList.remove('hidden');
                 
-                // Setup both tabs
                 setupPrivateTracker();
                 setupLateComingTracker();
 
@@ -182,78 +208,66 @@
             lateListDate.value = new Date().toISOString().slice(0, 10);
             lateListDate.addEventListener('change', loadRecordedLateLearners);
             exportLateListBtn.addEventListener('click', generateLateListReport);
-            loadRecordedLateLearners(); // Initial load for today
+            loadRecordedLateLearners(); 
 
             try {
                 const classesCol = collection(db, 'classes');
                 const snapshot = await getDocs(classesCol);
                 
                 if (snapshot.empty) {
-                    classSelector.innerHTML = '<option value="">-- No classes found --</option>';
+                    lateClassSelector.innerHTML = '<option value="">-- No classes found --</option>';
                     return;
                 }
 
                 const classes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a,b) => a.className.localeCompare(b.className));
-                classSelector.innerHTML = '<option value="">-- Select a Class --</option>';
+                lateClassSelector.innerHTML = '<option value="">-- Select a Class --</option>';
                 classes.forEach(c => {
                     const option = document.createElement('option');
                     option.value = c.id;
                     option.textContent = c.className;
-                    classSelector.appendChild(option);
+                    lateClassSelector.appendChild(option);
                 });
 
-                classSelector.addEventListener('change', () => {
-                    const classId = classSelector.value;
+                lateClassSelector.addEventListener('change', () => {
+                    const classId = lateClassSelector.value;
                     if (classId) {
-                        loadLearnersForClass(classId);
+                        loadLearnersForClass(classId, learnersToMarkList);
                     } else {
                         learnersToMarkList.innerHTML = '<p class="text-center text-gray-500">Please select a class to see the learners.</p>';
                     }
                 });
             } catch (error) {
                 console.error("Error loading classes:", error);
-                classSelector.innerHTML = '<option value="">-- Error Loading Classes --</option>';
+                lateClassSelector.innerHTML = '<option value="">-- Error Loading Classes --</option>';
             }
         }
 
-        async function loadLearnersForClass(classId) {
-            learnersToMarkList.innerHTML = '<p class="text-center text-gray-500">Loading learners...</p>';
+        async function loadLearnersForClass(classId, container) {
+            container.innerHTML = '<p class="text-center text-gray-500">Loading learners...</p>';
             try {
                 const learnersCol = collection(db, `classes/${classId}/learners`);
                 const snapshot = await getDocs(learnersCol);
 
                 if (snapshot.empty) {
-                    learnersToMarkList.innerHTML = '<p class="text-center text-gray-500">No learners found for this class.</p>';
+                    container.innerHTML = '<p class="text-center text-gray-500">No learners found for this class.</p>';
                     return;
                 }
 
                 const learners = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a,b) => a.name.localeCompare(b.name));
-                learnersToMarkList.innerHTML = learners.map(learner => `
+                container.innerHTML = learners.map(learner => `
                     <div class="bg-gray-50 p-4 rounded-lg flex flex-col sm:flex-row justify-between items-center" data-learner-id="${learner.id}" data-learner-name="${learner.name}" data-class-id="${classId}">
                         <span class="font-bold text-lg mb-2 sm:mb-0">${learner.name}</span>
                         <div class="flex gap-2 w-full sm:w-auto">
                             <button class="mark-late-btn flex-grow bg-yellow-500 text-white font-semibold py-2 px-6 rounded-lg hover:bg-yellow-600 transition">Mark as Late</button>
-                            <button class="delete-shared-learner-btn bg-red-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-red-700 transition">X</button>
                         </div>
                     </div>
                 `).join('');
             } catch (error) {
                  console.error("Error loading learners:", error);
-                 learnersToMarkList.innerHTML = '<p class="text-center text-red-500">Error loading learners.</p>';
+                 container.innerHTML = '<p class="text-center text-red-500">Error loading learners.</p>';
             }
         }
         
-        async function deleteSharedLearner(classId, learnerId, learnerName) {
-            try {
-                await deleteDoc(doc(db, `classes/${classId}/learners/${learnerId}`));
-                showMessage(`${learnerName} has been deleted.`);
-                loadLearnersForClass(classId); // Refresh the list
-            } catch (error) {
-                console.error("Error deleting shared learner:", error);
-                showMessage("Failed to delete learner.");
-            }
-        }
-
         learnersToMarkList.addEventListener('click', (e) => {
             const container = e.target.closest('[data-learner-id]');
             if (!container) return;
@@ -262,11 +276,6 @@
             if (e.target.classList.contains('mark-late-btn')) {
                 const note = prompt(`Add an optional note for ${learnerName}:`);
                 if (note !== null) recordLateComing(classId, learnerId, learnerName, note);
-            }
-            if (e.target.classList.contains('delete-shared-learner-btn')) {
-                showConfirmation(`Are you sure you want to permanently delete ${learnerName}? This cannot be undone.`, () => {
-                    deleteSharedLearner(classId, learnerId, learnerName);
-                });
             }
         });
 
@@ -379,145 +388,68 @@
 
 
         // =====================================================================
-        // PRIVATE ATTENDANCE TRACKER (INDIVIDUAL TEACHER DATA)
+        // PRIVATE ATTENDANCE TRACKER
         // =====================================================================
-        function setupPrivateTracker() {
-            // Inject the HTML for the private tracker into its container
-            contentAttendance.innerHTML = `
-                <div class="bg-white p-6 rounded-xl shadow-md mb-8 max-w-2xl mx-auto">
-                    <h2 class="text-2xl font-semibold mb-4">My Class Details</h2>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div><label for="teacherName" class="block text-sm font-medium text-gray-700">My Name</label><input type="text" id="teacherName" class="mt-1 block w-full p-3 border rounded-lg"></div>
-                        <div><label for="className" class="block text-sm font-medium text-gray-700">My Class Name</label><input type="text" id="className" class="mt-1 block w-full p-3 border rounded-lg"></div>
-                        <div class="sm:col-span-2"><label for="subjectName" class="block text-sm font-medium text-gray-700">My Subject</label><input type="text" id="subjectName" class="mt-1 block w-full p-3 border rounded-lg"></div>
-                    </div>
-                    <div class="mt-6 text-right"><button id="saveDetailsBtn" class="bg-blue-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-blue-700">Save Details</button></div>
-                </div>
-                <div class="bg-white p-6 rounded-xl shadow-md mb-8 max-w-2xl mx-auto">
-                    <h2 class="text-2xl font-semibold mb-4">Download My Reports</h2>
-                    <div class="flex flex-col sm:flex-row items-center gap-4">
-                        <label for="reportMonth" class="font-medium">Select Month:</label>
-                        <input type="month" id="reportMonth" class="p-3 border rounded-lg">
-                        <button id="downloadReportBtn" class="bg-emerald-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-emerald-700">Download Report</button>
-                    </div>
-                </div>
-                <div class="bg-white p-6 rounded-xl shadow-md mb-8 max-w-2xl mx-auto">
-                    <h2 class="text-2xl font-semibold mb-4">Add a New Learner to My List</h2>
-                    <div class="flex flex-col sm:flex-row gap-4">
-                        <input type="text" id="learnerName" class="flex-grow p-3 border rounded-lg">
-                        <button id="addLearnerBtn" class="bg-indigo-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-indigo-700">Add Learner</button>
-                    </div>
-                </div>
-                <div class="bg-white p-6 rounded-xl shadow-md mb-8 max-w-2xl mx-auto">
-                    <h2 class="text-2xl font-semibold mb-4">Bulk Upload My Learners</h2>
-                    <div class="flex flex-col sm:flex-row gap-4">
-                        <input type="file" id="csvFileInput" accept=".csv" class="flex-grow p-2 border rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-indigo-50 hover:file:bg-indigo-100">
-                        <button id="bulkAddBtn" class="bg-teal-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-teal-700">Upload CSV</button>
-                    </div>
-                </div>
-                <div class="bg-white p-6 rounded-xl shadow-md mb-8 max-w-2xl mx-auto flex items-center justify-center gap-4">
-                     <h2 class="text-2xl font-semibold">Date:</h2>
-                     <input type="date" id="attendanceDate" class="p-3 border rounded-lg">
-                </div>
-                <div id="learnersList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
-                <div id="loading" class="text-center hidden"><p class="text-lg">Loading...</p></div>
-            `;
-            // Re-bind event listeners and load initial data
-            bindPrivateTrackerEvents();
-            loadPrivateLearners();
-        }
+        async function setupPrivateTracker() {
+            attendanceDate.value = new Date().toISOString().slice(0, 10);
+            attendanceDate.addEventListener('change', () => loadPrivateLearners(privateClassSelector.value));
 
-        function bindPrivateTrackerEvents() {
-            el('attendanceDate').value = new Date().toISOString().slice(0, 10);
-            el('reportMonth').value = new Date().toISOString().slice(0, 7);
-            el('attendanceDate').addEventListener('change', loadPrivateLearners);
+            // Populate dropdowns
+            for (let i = 1; i <= 7; i++) {
+                cycleDaySelect.innerHTML += `<option value="${i}">Day ${i}</option>`;
+                periodSelect.innerHTML += `<option value="${i}">Period ${i}</option>`;
+            }
 
-            // Use a single, delegated event listener for all clicks in the private tracker tab
-            contentAttendance.addEventListener('click', (e) => {
-                const target = e.target;
+            try {
+                const classesCol = collection(db, 'classes');
+                const snapshot = await getDocs(classesCol);
+                const classes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a,b) => a.className.localeCompare(b.className));
+                privateClassSelector.innerHTML = '<option value="">-- Select a Class --</option>';
+                classes.forEach(c => {
+                    const option = document.createElement('option');
+                    option.value = c.id;
+                    option.textContent = c.className;
+                    privateClassSelector.appendChild(option);
+                });
 
-                // Handle simple button clicks by ID
-                if (target.id === 'saveDetailsBtn') savePrivateClassDetails();
-                else if (target.id === 'addLearnerBtn') addPrivateLearner();
-                else if (target.id === 'downloadReportBtn') generatePrivateReport();
-                else if (target.id === 'bulkAddBtn') {
-                    const file = el('csvFileInput').files[0];
-                    if (!file) return showMessage("Please select a CSV file.");
-                    const reader = new FileReader();
-                    reader.onload = (event) => bulkAddPrivateLearners(event.target.result.split(/\r?\n/).map(n => n.trim()).filter(Boolean));
-                    reader.readAsText(file);
-                }
+                privateClassSelector.addEventListener('change', () => {
+                    const classId = privateClassSelector.value;
+                    const className = privateClassSelector.options[privateClassSelector.selectedIndex].text;
+                    displayClassName.textContent = classId ? className : "[Select a Class]";
 
-                // Handle clicks within the dynamic learner cards
-                const card = target.closest('[data-id]');
-                if (!card) return;
-                const learnerId = card.dataset.id;
-                const learnerName = card.querySelector('h3').textContent;
-                const date = el('attendanceDate').value;
-
-                if (target.matches('.status-btn')) {
-                    const status = target.dataset.status;
-                    if (status === 'Absent' || status === 'Late' || status === 'Bunking') openPrivateNoteModal(learnerId, status, date, learnerName);
-                    else setPrivateAttendance(learnerId, status, date);
-                } else if (target.matches('.view-history-btn')) {
-                    openPrivateHistoryModal(learnerId, learnerName);
-                } else if (target.matches('.delete-learner-btn')) {
-                    showConfirmation('Delete this learner and all their records?', () => deletePrivateLearner(learnerId));
-                }
-            });
-        }
-
-        // All the original functions, now renamed to be specific to the private tracker
-        const privatePaths = {
-            learners: () => collection(db, `/artifacts/${appId}/users/${userId}/learners`),
-            attendance: () => collection(db, `/artifacts/${appId}/users/${userId}/attendance`),
-            classDetails: () => doc(db, `/artifacts/${appId}/users/${userId}/settings/classDetails`)
-        };
-
-        async function savePrivateClassDetails() {
-            const details = { teacherName: el('teacherName').value.trim(), className: el('className').value.trim(), subjectName: el('subjectName').value.trim() };
-            try { await setDoc(privatePaths.classDetails(), details); showMessage("Details saved!"); } 
-            catch (e) { console.error(e); showMessage("Failed to save details."); }
-        }
-
-        function loadClassDetails() {
-            onSnapshot(privatePaths.classDetails(), (doc) => {
-                const d = doc.exists() ? doc.data() : {};
-                el('teacherName').value = d.teacherName || '';
-                el('className').value = d.className || '';
-                el('subjectName').value = d.subjectName || '';
-                el('displayTeacherName').textContent = d.teacherName || '[Teacher]';
-                el('displayClassName').textContent = d.className || '[Class]';
-                el('displaySubjectName').textContent = d.subjectName || '[Subject]';
-            });
-        }
-
-        async function addPrivateLearner() {
-            const name = el('learnerName').value.trim();
-            if (!name) return showMessage("Learner name is empty.");
-            try { await addDoc(privatePaths.learners(), { name, createdAt: new Date() }); el('learnerName').value = ''; } 
-            catch (e) { console.error(e); showMessage("Error adding learner."); }
+                    if (classId) {
+                        loadPrivateLearners(classId);
+                    } else {
+                        learnersList.innerHTML = '<p class="text-center col-span-full">Please select a class to see the learners.</p>';
+                    }
+                });
+            } catch (error) {
+                console.error("Error loading classes for private tracker:", error);
+                privateClassSelector.innerHTML = '<option value="">-- Error Loading --</option>';
+            }
         }
         
-        async function bulkAddPrivateLearners(names) {
-            if (!names || names.length === 0) return showMessage("No names found.");
-            const batch = writeBatch(db);
-            names.forEach(name => batch.set(doc(privatePaths.learners()), { name, createdAt: new Date() }));
-            try { await batch.commit(); showMessage(`Added ${names.length} learners.`); el('csvFileInput').value = ''; } 
-            catch (e) { console.error(e); showMessage("Bulk upload failed."); }
-        }
+        async function loadPrivateLearners(classId) {
+            if (!classId) return;
+            loading.classList.remove('hidden');
+            learnersList.innerHTML = '';
+            
+            const learnersCol = collection(db, `classes/${classId}/learners`);
+            const learnersSnapshot = await getDocs(learnersCol);
 
-        function loadPrivateLearners() {
-            el('loading').classList.remove('hidden');
-            el('learnersList').innerHTML = '';
-            onSnapshot(query(privatePaths.learners()), async (snapshot) => {
-                el('loading').classList.add('hidden');
-                if (snapshot.empty) return el('learnersList').innerHTML = '<p class="text-center col-span-full">No learners added yet.</p>';
-                const learners = snapshot.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => a.name.localeCompare(b.name));
-                const attendancePromises = learners.map(l => getPrivateAttendanceForDate(l.id, el('attendanceDate').value));
-                const attendanceRecords = await Promise.all(attendancePromises);
-                el('learnersList').innerHTML = learners.map((learner, i) => createPrivateLearnerCardHTML(learner, attendanceRecords[i])).join('');
-            });
+            if (learnersSnapshot.empty) {
+                loading.classList.add('hidden');
+                learnersList.innerHTML = '<p class="text-center col-span-full">No learners found for this class.</p>';
+                return;
+            }
+
+            const learners = learnersSnapshot.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => a.name.localeCompare(b.name));
+            
+            const attendancePromises = learners.map(l => getPrivateAttendanceForDate(l.id, attendanceDate.value));
+            const attendanceRecords = await Promise.all(attendancePromises);
+            
+            loading.classList.add('hidden');
+            learnersList.innerHTML = learners.map((learner, i) => createPrivateLearnerCardHTML(learner, attendanceRecords[i])).join('');
         }
 
         function createPrivateLearnerCardHTML(learner, attendance) {
@@ -545,11 +477,14 @@
                     </div>
                     <div class="pt-2 border-t border-gray-200 mt-4 flex justify-between items-center">
                          <button class="view-history-btn text-sm text-indigo-600 hover:underline">View History</button>
-                         <button class="delete-learner-btn text-sm text-red-600 hover:underline">Delete</button>
                     </div>
                 </div>`;
         }
         
+        const privatePaths = {
+            attendance: () => collection(db, `/artifacts/${appId}/users/${userId}/attendance`),
+        };
+
         async function getPrivateAttendanceForDate(learnerId, date) {
             const docRef = doc(privatePaths.attendance(), `${learnerId}_${date}`);
             const docSnap = await getDoc(docRef);
@@ -557,23 +492,47 @@
         }
 
         async function setPrivateAttendance(learnerId, status, date, note = '') {
+            const sessionDetails = {
+                teacherName: teacherNameInput.value.trim(),
+                subject: subjectInput.value.trim(),
+                cycleDay: cycleDaySelect.value,
+                period: periodSelect.value
+            };
+
+            if (!sessionDetails.teacherName || !sessionDetails.subject) {
+                showMessage("Please enter your name and the subject before marking attendance.");
+                return;
+            }
+
             const docRef = doc(privatePaths.attendance(), `${learnerId}_${date}`);
             try {
-                await setDoc(docRef, { learnerId, date, status, note, updatedAt: new Date() });
-                loadPrivateLearners();
+                await setDoc(docRef, { 
+                    learnerId, 
+                    date, 
+                    status, 
+                    note, 
+                    ...sessionDetails,
+                    updatedAt: new Date() 
+                });
+                loadPrivateLearners(privateClassSelector.value);
             } catch (e) { console.error("Error setting attendance: ", e); }
         }
+        
+        contentAttendance.addEventListener('click', (e) => {
+            const card = e.target.closest('[data-id]');
+            if (!card) return;
+            const learnerId = card.dataset.id;
+            const learnerName = card.querySelector('h3').textContent;
+            const date = attendanceDate.value;
 
-        async function deletePrivateLearner(learnerId) {
-            try {
-                await deleteDoc(doc(privatePaths.learners(), learnerId));
-                const q = query(privatePaths.attendance(), where("learnerId", "==", learnerId));
-                const snapshot = await getDocs(q);
-                const batch = writeBatch(db);
-                snapshot.forEach(d => batch.delete(d.ref));
-                await batch.commit();
-            } catch (e) { console.error("Error deleting learner: ", e); showMessage("Error deleting learner."); }
-        }
+            if (e.target.matches('.status-btn')) {
+                const status = e.target.dataset.status;
+                if (status === 'Absent' || status === 'Late' || status === 'Bunking') openPrivateNoteModal(learnerId, status, date, learnerName);
+                else setPrivateAttendance(learnerId, status, date);
+            } else if (e.target.matches('.view-history-btn')) {
+                openPrivateHistoryModal(learnerId, learnerName);
+            }
+        });
         
         function openPrivateNoteModal(learnerId, status, date, learnerName) {
             el('noteModalTitle').textContent = `Add Note for ${learnerName} (${status})`;
@@ -599,41 +558,13 @@
                 const summaryHtml = `<div class="bg-gray-100 p-4 rounded-lg mb-4 flex justify-around text-center"><div><p class="text-2xl font-bold text-red-600">${absentCount}</p><p class="text-sm text-gray-600">Absences</p></div><div><p class="text-2xl font-bold text-yellow-600">${lateCount}</p><p class="text-sm text-gray-600">Lates</p></div></div>`;
                 const historyHtml = '<ul class="space-y-3">' + records.map(r => {
                     const color = r.status === 'Present' ? 'text-green-600' : r.status === 'Absent' ? 'text-red-600' : r.status === 'Late' ? 'text-yellow-600' : 'text-slate-600';
-                    return `<li class="bg-gray-50 p-3 rounded-md"><div class="flex justify-between items-center"><span class="font-medium">${r.date}</span><span class="font-semibold ${color}">${r.status}</span></div>${r.note ? `<p class="text-sm text-gray-600 mt-1 pl-1 border-l-2 border-gray-300">Note: ${r.note}</p>` : ''}</li>`;
+                    const sessionInfo = r.teacherName ? `<p class="text-xs text-gray-500 mt-1">${r.subject} - Day ${r.cycleDay}, Period ${r.period} (${r.teacherName})</p>` : '';
+                    return `<li class="bg-gray-50 p-3 rounded-md"><div class="flex justify-between items-center"><span class="font-medium">${r.date}</span><span class="font-semibold ${color}">${r.status}</span></div>${r.note ? `<p class="text-sm text-gray-600 mt-1 pl-1 border-l-2 border-gray-300">Note: ${r.note}</p>` : ''}${sessionInfo}</li>`;
                 }).join('') + '</ul>';
                 modalBody.innerHTML = summaryHtml + historyHtml;
             });
         }
         closeModalBtn.addEventListener('click', () => historyModal.classList.add('hidden'));
-        
-        async function generatePrivateReport() {
-            const monthYear = el('reportMonth').value;
-            if (!monthYear) return showMessage("Please select a month.");
-            const [year, month] = monthYear.split('-');
-            const startDate = `${year}-${month}-01`;
-            const lastDay = new Date(year, month, 0).getDate();
-            const endDate = `${year}-${month}-${String(lastDay).padStart(2, '0')}`;
-            
-            const learnersSnap = await getDocs(privatePaths.learners());
-            const learnersMap = new Map(learnersSnap.docs.map(d => [d.id, d.data().name]));
-
-            const q = query(privatePaths.attendance(), where("date", ">=", startDate), where("date", "<=", endDate));
-            const attendanceSnap = await getDocs(q);
-            if (attendanceSnap.empty) return showMessage("No records for this month.");
-
-            let csvContent = "data:text/csv;charset=utf-8,Learner Name,Date,Status,Note\r\n";
-            const records = attendanceSnap.docs.map(d => d.data()).sort((a,b) => new Date(a.date) - new Date(b.date) || (learnersMap.get(a.learnerId) || '').localeCompare(learnersMap.get(b.learnerId) || ''));
-            records.forEach(r => {
-                const name = learnersMap.get(r.learnerId) || "Unknown";
-                const note = r.note ? r.note.replace(/,/g, ";") : "";
-                csvContent += `${name},${r.date},${r.status},${note}\r\n`;
-            });
-
-            const link = document.createElement("a");
-            link.href = encodeURI(csvContent);
-            link.download = `attendance_report_${year}_${month}.csv`;
-            link.click();
-        }
         
         // --- Modal Helpers ---
         function showMessage(message) {
