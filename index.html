@@ -6,6 +6,9 @@
     <title>Attendance & Late Coming Tracker</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- PDF Generation Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
     <style>
         body { font-family: 'Inter', sans-serif; }
         .modal { transition: opacity 0.3s ease; }
@@ -75,16 +78,41 @@
                 </div>
 
                 <div class="bg-white p-6 rounded-xl shadow-md mb-8 max-w-4xl mx-auto">
-                    <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-2xl font-semibold">Daily Late Coming List</h2>
-                        <button id="exportLateListBtn" class="bg-blue-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-blue-700 transition">Export Today's List</button>
-                    </div>
+                    <h2 class="text-2xl font-semibold mb-4">Daily Late Coming List</h2>
                     <div class="flex items-center justify-center gap-4 mb-6">
                          <h3 class="text-xl font-semibold">Date:</h3>
                          <input type="date" id="lateListDate" class="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 transition">
                     </div>
                     <div id="recordedLateList" class="space-y-3">
                         <!-- Late learners will be listed here -->
+                    </div>
+                </div>
+                 <div class="bg-white p-6 rounded-xl shadow-md mb-8 max-w-4xl mx-auto">
+                    <h2 class="text-2xl font-semibold mb-4">Download Late Coming Reports</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+                        <div>
+                            <label for="lateReportType" class="block font-medium">Report Type</label>
+                            <select id="lateReportType" class="w-full mt-1 p-3 border rounded-lg">
+                                <option value="today">Today's List</option>
+                                <option value="week">This Week</option>
+                                <option value="month">This Month</option>
+                                <option value="range">Date Range</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="lateReportFormat" class="block font-medium">Format</label>
+                            <select id="lateReportFormat" class="w-full mt-1 p-3 border rounded-lg">
+                                <option value="csv">CSV (for Excel)</option>
+                                <option value="pdf">PDF</option>
+                            </select>
+                        </div>
+                        <div id="lateDateRange" class="hidden md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div><label for="lateStartDate" class="block font-medium">Start Date</label><input type="date" id="lateStartDate" class="w-full mt-1 p-3 border rounded-lg"></div>
+                            <div><label for="lateEndDate" class="block font-medium">End Date</label><input type="date" id="lateEndDate" class="w-full mt-1 p-3 border rounded-lg"></div>
+                        </div>
+                        <div class="md:col-span-2">
+                            <button id="exportLateListBtn" class="bg-blue-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-blue-700 transition w-full">Download Report</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -110,7 +138,7 @@
         </main>
         
         <footer class="text-center p-4 text-gray-500 text-xs">
-            App Version: 2.2
+            App Version: 2.3
         </footer>
 
         <!-- All Modals -->
