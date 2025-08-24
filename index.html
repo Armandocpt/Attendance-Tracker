@@ -78,10 +78,7 @@
                 </div>
 
                 <div class="bg-white p-6 rounded-xl shadow-md mb-8 max-w-4xl mx-auto">
-                    <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-2xl font-semibold">Daily Late Coming List</h2>
-                        <button id="exportLateListBtn" class="bg-blue-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-blue-700 transition">Export List</button>
-                    </div>
+                    <h2 class="text-2xl font-semibold mb-4">Daily Late Coming List</h2>
                     <div class="flex items-center justify-center gap-4 mb-6">
                          <h3 class="text-xl font-semibold">Date:</h3>
                          <input type="date" id="lateListDate" class="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 transition">
@@ -141,7 +138,7 @@
         </main>
         
         <footer class="text-center p-4 text-gray-500 text-xs">
-            App Version: 2.12
+            App Version: 2.13
         </footer>
 
         <!-- All Modals -->
@@ -620,7 +617,6 @@ service cloud.firestore {
             }
 
             el('content-attendance').addEventListener('click', handlePrivateLearnerClick);
-            el('exportPrivateReportBtn').addEventListener('click', generatePrivateReport);
             el('privateReportType').addEventListener('change', (e) => {
                 el('privateDateRange').classList.toggle('hidden', e.target.value !== 'range');
             });
@@ -743,17 +739,24 @@ service cloud.firestore {
         }
         
         function handlePrivateLearnerClick(e) {
-            const card = e.target.closest('[data-id]');
+            const target = e.target;
+            
+            if (target.id === 'exportPrivateReportBtn') {
+                generatePrivateReport();
+                return;
+            }
+
+            const card = target.closest('[data-id]');
             if (!card) return;
             const learnerId = card.dataset.id;
             const learnerName = card.querySelector('h3').textContent;
             const date = el('attendanceDate').value;
 
-            if (e.target.matches('.status-btn')) {
-                const status = e.target.dataset.status;
+            if (target.matches('.status-btn')) {
+                const status = target.dataset.status;
                 if (status === 'Absent' || status === 'Late' || status === 'Bunking') openPrivateNoteModal(learnerId, status, date, learnerName);
                 else setPrivateAttendance(learnerId, status, date);
-            } else if (e.target.matches('.view-history-btn')) {
+            } else if (target.matches('.view-history-btn')) {
                 openPrivateHistoryModal(learnerId, learnerName);
             }
         }
