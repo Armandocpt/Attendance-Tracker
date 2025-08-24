@@ -138,7 +138,7 @@
         </main>
         
         <footer class="text-center p-4 text-gray-500 text-xs">
-            App Version: 2.7
+            App Version: 2.11
         </footer>
 
         <!-- All Modals -->
@@ -545,6 +545,32 @@ service cloud.firestore {
                         </div>
                     </div>
                 </div>
+                <div class="bg-white p-6 rounded-xl shadow-md mb-8 max-w-4xl mx-auto">
+                    <h2 class="text-2xl font-semibold mb-4">Download My Reports</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+                        <div>
+                            <label for="privateReportType" class="block font-medium">Report Type</label>
+                            <select id="privateReportType" class="w-full mt-1 p-3 border rounded-lg">
+                                <option value="month">This Month</option>
+                                <option value="range">Date Range</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="privateReportFormat" class="block font-medium">Format</label>
+                            <select id="privateReportFormat" class="w-full mt-1 p-3 border rounded-lg">
+                                <option value="csv">CSV (for Excel)</option>
+                                <option value="pdf">PDF</option>
+                            </select>
+                        </div>
+                        <div id="privateDateRange" class="hidden md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div><label for="privateStartDate" class="block font-medium">Start Date</label><input type="date" id="privateStartDate" class="w-full mt-1 p-3 border rounded-lg"></div>
+                            <div><label for="privateEndDate" class="block font-medium">End Date</label><input type="date" id="privateEndDate" class="w-full mt-1 p-3 border rounded-lg"></div>
+                        </div>
+                        <div class="md:col-span-2">
+                            <button id="exportPrivateReportBtn" class="bg-emerald-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-emerald-700 transition w-full">Download Report</button>
+                        </div>
+                    </div>
+                </div>
                 <div id="learnersList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
                 <div id="loading" class="text-center hidden"><p class="text-lg">Loading...</p></div>
             `;
@@ -591,6 +617,10 @@ service cloud.firestore {
             }
 
             el('content-attendance').addEventListener('click', handlePrivateLearnerClick);
+            el('exportPrivateReportBtn').addEventListener('click', generatePrivateReport);
+            el('privateReportType').addEventListener('change', (e) => {
+                el('privateDateRange').classList.toggle('hidden', e.target.value !== 'range');
+            });
         }
 
         const privatePaths = {
@@ -758,6 +788,60 @@ service cloud.firestore {
             });
         }
         el('closeModalBtn').addEventListener('click', () => el('historyModal').classList.add('hidden'));
+        
+        async function generatePrivateReport() {
+            const reportType = el('privateReportType').value;
+            const format = el('privateReportFormat').value;
+            let startDate, endDate;
+            const now = new Date();
+
+            if (reportType === 'month') {
+                startDate = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
+                endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().slice(0, 10);
+            } else {
+                startDate = el('privateStartDate').value;
+                endDate = el('privateEndDate').value;
+                if (!startDate || !endDate) {
+                    return showMessage("Please select a start and end date for the report.");
+                }
+            }
+
+            const q = query(privatePaths.attendance(), where("date", ">=", startDate), where("date", "<=", endDate));
+            const snapshot = await getDocs(q);
+
+            if (snapshot.empty) {
+                return showMessage("No attendance records found for the selected period.");
+            }
+            
+            const classId = el('privateClassSelector').value;
+            if (!classId) return showMessage("Please select a class before generating a report.");
+
+            const learnersSnap = await getDocs(collection(db, `classes/${classId}/learners`));
+            const learnersMap = new Map(learnersSnap.docs.map(d => [d.id, d.data().name]));
+
+            const records = snapshot.docs.map(doc => doc.data()).sort((a,b) => new Date(a.date) - new Date(b.date));
+
+            if (format === 'csv') {
+                let csvContent = "data:text/csv;charset=utf-8,Date,Learner Name,Status,Note,Teacher,Subject,Cycle Day,Period\r\n";
+                records.forEach(r => {
+                    const name = learnersMap.get(r.learnerId) || "Unknown";
+                    const note = r.note ? r.note.replace(/,/g, ";") : "";
+                    csvContent += `${r.date},${name},${r.status},${note},${r.teacherName},${r.subject},${r.cycleDay},${r.period}\r\n`;
+                });
+                const link = document.createElement("a");
+                link.href = encodeURI(csvContent);
+                link.download = `private_attendance_${startDate}_to_${endDate}.csv`;
+                link.click();
+            } else { // PDF
+                const doc = new jsPDF();
+                doc.text("Private Attendance Report", 14, 16);
+                doc.autoTable({
+                    head: [['Date', 'Learner Name', 'Status', 'Note', 'Teacher', 'Subject', 'Day', 'Period']],
+                    body: records.map(r => [r.date, learnersMap.get(r.learnerId) || "Unknown", r.status, r.note, r.teacherName, r.subject, r.cycleDay, r.period]),
+                });
+                doc.save(`private_attendance_${startDate}_to_${endDate}.pdf`);
+            }
+        }
         
         // --- Modal Helpers ---
         function showMessage(message, isSecurity = false) {
