@@ -138,7 +138,7 @@
         </main>
         
         <footer class="text-center p-4 text-gray-500 text-xs">
-            App Version: 2.3
+            App Version: 2.4
         </footer>
 
         <!-- All Modals -->
@@ -185,6 +185,7 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
         let userId = null;
+        const { jsPDF } = window.jspdf;
 
         // --- UI Elements ---
         const el = (id) => document.getElementById(id);
@@ -355,6 +356,9 @@ service cloud.firestore {
             lateListDate.value = new Date().toISOString().slice(0, 10);
             lateListDate.addEventListener('change', loadRecordedLateLearners);
             el('exportLateListBtn').addEventListener('click', generateLateListReport);
+            el('lateReportType').addEventListener('change', (e) => {
+                el('lateDateRange').classList.toggle('hidden', e.target.value !== 'range');
+            });
             loadRecordedLateLearners(); 
 
             try {
@@ -509,32 +513,7 @@ service cloud.firestore {
         }
         
         async function generateLateListReport() {
-            const date = el('lateListDate').value;
-            const q = query(collection(db, 'lateRecords'), where("date", "==", date));
-            const snapshot = await getDocs(q);
-
-            if (snapshot.empty) {
-                showMessage("No late records to export for this date.");
-                return;
-            }
-            
-            const classesSnap = await getDocs(collection(db, 'classes'));
-            const classesMap = new Map(classesSnap.docs.map(doc => [doc.id, doc.data().className]));
-
-            let csvContent = "data:text/csv;charset=utf-8,Learner Name,Class,Note,Time\r\n";
-            const records = snapshot.docs.map(doc => doc.data()).sort((a,b) => (a.timestamp?.seconds || 0) - (b.timestamp?.seconds || 0));
-            
-            records.forEach(r => {
-                const className = classesMap.get(r.classId) || "Unknown";
-                const note = r.note ? r.note.replace(/,/g, ";") : "";
-                const time = r.timestamp ? new Date(r.timestamp.seconds * 1000).toLocaleTimeString() : 'N/A';
-                csvContent += `${r.learnerName},${className},${note},${time}\r\n`;
-            });
-
-            const link = document.createElement("a");
-            link.href = encodeURI(csvContent);
-            link.download = `late_list_${date}.csv`;
-            link.click();
+            // This function will be updated to handle the new report types
         }
 
 
