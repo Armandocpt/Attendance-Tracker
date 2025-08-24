@@ -110,7 +110,7 @@
         </main>
         
         <footer class="text-center p-4 text-gray-500 text-xs">
-            App Version: 1.9
+            App Version: 2.0
         </footer>
 
         <!-- All Modals -->
@@ -617,12 +617,11 @@ service cloud.firestore {
              const status = attendance?.status || 'Not Marked';
             const note = attendance?.note || '';
             let statusColorClass = 'text-gray-500';
-            if (status === 'Present') statusColorClass = 'text-green-600';
             if (status === 'Absent') statusColorClass = 'text-red-600';
             if (status === 'Late') statusColorClass = 'text-yellow-600';
             if (status === 'Bunking') statusColorClass = 'text-slate-600';
             return `
-                <div class="bg-white p-5 rounded-xl shadow-lg flex flex-col space-y-4 border-2 ${status === 'Not Marked' ? 'border-gray-200' : status === 'Present' ? 'border-green-500' : status === 'Absent' ? 'border-red-500' : status === 'Late' ? 'border-yellow-500' : 'border-slate-500'}" data-id="${learner.id}">
+                <div class="bg-white p-5 rounded-xl shadow-lg flex flex-col space-y-4 border-2 ${status === 'Not Marked' ? 'border-gray-200' : status === 'Absent' ? 'border-red-500' : status === 'Late' ? 'border-yellow-500' : 'border-slate-500'}" data-id="${learner.id}">
                     <div class="flex-grow">
                         <div class="flex justify-between items-center">
                             <h3 class="text-xl font-bold text-gray-900">${learner.name}</h3>
@@ -631,10 +630,10 @@ service cloud.firestore {
                         <p class="text-sm text-gray-500">Status: <span class="font-semibold ${statusColorClass}">${status}</span></p>
                     </div>
                     <div class="grid grid-cols-2 gap-2">
-                        <button class="status-btn bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition" data-status="Present">Present</button>
                         <button class="status-btn bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition" data-status="Absent">Absent</button>
                         <button class="status-btn bg-yellow-500 text-white px-4 py-2 rounded-md hover:bg-yellow-600 transition" data-status="Late">Late</button>
                         <button class="status-btn bg-slate-500 text-white px-4 py-2 rounded-md hover:bg-slate-600 transition" data-status="Bunking">Bunking</button>
+                        <button class="status-btn bg-gray-300 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-400 transition" data-status="Not Marked">Unmark</button>
                     </div>
                     <div class="pt-2 border-t border-gray-200 mt-4 flex justify-between items-center">
                          <button class="view-history-btn text-sm text-indigo-600 hover:underline">View History</button>
@@ -656,23 +655,51 @@ service cloud.firestore {
                 period: el('periodSelect').value
             };
 
-            if (!sessionDetails.teacherName || !sessionDetails.subject) {
+            if (status !== 'Not Marked' && (!sessionDetails.teacherName || !sessionDetails.subject)) {
                 showMessage("Please enter your name and the subject before marking attendance.");
                 return;
             }
 
             const docRef = doc(privatePaths.attendance(), `${learnerId}_${date}`);
             try {
-                await setDoc(docRef, { 
-                    learnerId, 
-                    date, 
-                    status, 
-                    note, 
-                    ...sessionDetails,
-                    updatedAt: new Date() 
-                });
+                if (status === 'Not Marked') {
+                    await deleteDoc(docRef);
+                } else {
+                    await setDoc(docRef, { 
+                        learnerId, 
+                        date, 
+                        status, 
+                        note, 
+                        ...sessionDetails,
+                        updatedAt: new Date() 
+                    });
+                }
                 loadPrivateLearners(el('privateClassSelector').value);
+                
+                if (status === 'Absent' || status === 'Bunking') {
+                    checkForConsecutive(learnerId, date, status);
+                }
+
             } catch (e) { console.error("Error setting attendance: ", e); }
+        }
+        
+        async function checkForConsecutive(learnerId, date, status) {
+            let consecutiveCount = 1;
+            for (let i = 1; i < 3; i++) {
+                const prevDate = new Date(date);
+                prevDate.setDate(prevDate.getDate() - i);
+                const prevDateStr = prevDate.toISOString().slice(0, 10);
+                const record = await getPrivateAttendanceForDate(learnerId, prevDateStr);
+                if (record && record.status === status) {
+                    consecutiveCount++;
+                } else {
+                    break; 
+                }
+            }
+            if (consecutiveCount >= 3) {
+                const learnerName = document.querySelector(`[data-id="${learnerId}"] h3`).textContent;
+                showMessage(`ALERT: ${learnerName} has been marked as '${status}' for ${consecutiveCount} consecutive days.`);
+            }
         }
         
         function handlePrivateLearnerClick(e) {
