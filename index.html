@@ -138,7 +138,7 @@
         </main>
         
         <footer class="text-center p-4 text-gray-500 text-xs">
-            App Version: 2.13
+            App Version: 2.15
         </footer>
 
         <!-- All Modals -->
@@ -513,7 +513,56 @@ service cloud.firestore {
         }
         
         async function generateLateListReport() {
-            // This function will be updated to handle the new report types
+            const reportType = el('lateReportType').value;
+            const format = el('lateReportFormat').value;
+            let startDate, endDate;
+            const now = new Date();
+
+            if(reportType === 'today') {
+                startDate = endDate = new Date().toISOString().slice(0, 10);
+            } else if (reportType === 'week') {
+                startDate = new Date(now.setDate(now.getDate() - now.getDay() + 1)).toISOString().slice(0, 10);
+                endDate = new Date().toISOString().slice(0, 10);
+            } else if (reportType === 'month') {
+                startDate = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
+                endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().slice(0, 10);
+            } else {
+                startDate = el('lateStartDate').value;
+                endDate = el('lateEndDate').value;
+                if (!startDate || !endDate) return showMessage("Please select a start and end date.");
+            }
+
+            const q = query(collection(db, 'lateRecords'), where("date", ">=", startDate), where("date", "<=", endDate));
+            const snapshot = await getDocs(q);
+
+            if (snapshot.empty) return showMessage("No late records found for the selected period.");
+            
+            const classesSnap = await getDocs(collection(db, 'classes'));
+            const classesMap = new Map(classesSnap.docs.map(doc => [doc.id, doc.data().className]));
+
+            const records = snapshot.docs.map(doc => doc.data()).sort((a,b) => (a.timestamp?.seconds || 0) - (b.timestamp?.seconds || 0));
+            
+            if (format === 'csv') {
+                let csvContent = "data:text/csv;charset=utf-8,Learner Name,Class,Note,Time\r\n";
+                records.forEach(r => {
+                    const className = classesMap.get(r.classId) || "Unknown";
+                    const note = r.note ? r.note.replace(/,/g, ";") : "";
+                    const time = r.timestamp ? new Date(r.timestamp.seconds * 1000).toLocaleTimeString() : 'N/A';
+                    csvContent += `${r.learnerName},${className},${note},${time}\r\n`;
+                });
+                const link = document.createElement("a");
+                link.href = encodeURI(csvContent);
+                link.download = `late_list_${startDate}_to_${endDate}.csv`;
+                link.click();
+            } else { // PDF
+                const doc = new jsPDF();
+                doc.text(`Late Coming Report (${startDate} to ${endDate})`, 14, 16);
+                doc.autoTable({
+                    head: [['Date', 'Learner', 'Class', 'Note', 'Time']],
+                    body: records.map(r => [r.date, r.learnerName, classesMap.get(r.classId) || "Unknown", r.note, r.timestamp ? new Date(r.timestamp.seconds * 1000).toLocaleTimeString() : 'N/A']),
+                });
+                doc.save(`late_list_${startDate}_to_${endDate}.pdf`);
+            }
         }
 
 
