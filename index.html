@@ -138,7 +138,7 @@
         </main>
         
         <footer class="text-center p-4 text-gray-500 text-xs">
-            App Version: 2.16
+            App Version: 2.18
         </footer>
 
         <!-- All Modals -->
@@ -521,7 +521,8 @@ service cloud.firestore {
             if(reportType === 'today') {
                 startDate = endDate = new Date().toISOString().slice(0, 10);
             } else if (reportType === 'week') {
-                startDate = new Date(now.setDate(now.getDate() - now.getDay() + 1)).toISOString().slice(0, 10);
+                const firstDay = new Date(now.setDate(now.getDate() - now.getDay() + 1));
+                startDate = firstDay.toISOString().slice(0, 10);
                 endDate = new Date().toISOString().slice(0, 10);
             } else if (reportType === 'month') {
                 startDate = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
@@ -540,16 +541,28 @@ service cloud.firestore {
             const classesSnap = await getDocs(collection(db, 'classes'));
             const classesMap = new Map(classesSnap.docs.map(doc => [doc.id, doc.data().className]));
 
-            const records = snapshot.docs.map(doc => doc.data()).sort((a,b) => (a.timestamp?.seconds || 0) - (b.timestamp?.seconds || 0));
+            const records = snapshot.docs.map(doc => doc.data());
             
+            // Group records by class
+            const groupedRecords = records.reduce((acc, record) => {
+                const className = classesMap.get(record.classId) || "Unknown Class";
+                if (!acc[className]) {
+                    acc[className] = [];
+                }
+                acc[className].push(record);
+                return acc;
+            }, {});
+
             if (format === 'csv') {
-                let csvContent = "data:text/csv;charset=utf-8,Learner Name,Class,Note,Time\r\n";
-                records.forEach(r => {
-                    const className = classesMap.get(r.classId) || "Unknown";
-                    const note = r.note ? r.note.replace(/,/g, ";") : "";
-                    const time = r.timestamp ? new Date(r.timestamp.seconds * 1000).toLocaleTimeString() : 'N/A';
-                    csvContent += `${r.learnerName},${className},${note},${time}\r\n`;
-                });
+                let csvContent = "data:text/csv;charset=utf-8,Class,Learner Name,Note,Time\r\n";
+                for (const className in groupedRecords) {
+                    csvContent += `${className}\r\n`; // Add class name as a header
+                    groupedRecords[className].sort((a,b) => (a.timestamp?.seconds || 0) - (b.timestamp?.seconds || 0)).forEach(r => {
+                        const note = r.note ? r.note.replace(/,/g, ";") : "";
+                        const time = r.timestamp ? new Date(r.timestamp.seconds * 1000).toLocaleTimeString() : 'N/A';
+                        csvContent += `,${r.learnerName},${note},${time}\r\n`;
+                    });
+                }
                 const link = document.createElement("a");
                 link.href = encodeURI(csvContent);
                 link.download = `late_list_${startDate}_to_${endDate}.csv`;
@@ -557,10 +570,16 @@ service cloud.firestore {
             } else { // PDF
                 const doc = new jsPDF();
                 doc.text(`Late Coming Report (${startDate} to ${endDate})`, 14, 16);
-                doc.autoTable({
-                    head: [['Date', 'Learner', 'Class', 'Note', 'Time']],
-                    body: records.map(r => [r.date, r.learnerName, classesMap.get(r.classId) || "Unknown", r.note, r.timestamp ? new Date(r.timestamp.seconds * 1000).toLocaleTimeString() : 'N/A']),
-                });
+                let startY = 22;
+                for (const className in groupedRecords) {
+                    doc.text(className, 14, startY);
+                    doc.autoTable({
+                        startY: startY + 2,
+                        head: [['Learner Name', 'Note', 'Time']],
+                        body: groupedRecords[className].sort((a,b) => (a.timestamp?.seconds || 0) - (b.timestamp?.seconds || 0)).map(r => [r.learnerName, r.note, r.timestamp ? new Date(r.timestamp.seconds * 1000).toLocaleTimeString() : 'N/A']),
+                    });
+                    startY = doc.autoTable.previous.finalY + 10;
+                }
                 doc.save(`late_list_${startDate}_to_${endDate}.pdf`);
             }
         }
@@ -594,7 +613,7 @@ service cloud.firestore {
                         </div>
                     </div>
                 </div>
-                 <div class="bg-white p-6 rounded-xl shadow-md mb-8 max-w-4xl mx-auto">
+                <div class="bg-white p-6 rounded-xl shadow-md mb-8 max-w-4xl mx-auto">
                     <h2 class="text-2xl font-semibold mb-4">Download My Reports</h2>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
                         <div>
