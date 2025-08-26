@@ -543,7 +543,6 @@ service cloud.firestore {
 
             const records = snapshot.docs.map(doc => doc.data());
             
-            // Group records by class
             const groupedRecords = records.reduce((acc, record) => {
                 const className = classesMap.get(record.classId) || "Unknown Class";
                 if (!acc[className]) {
@@ -569,16 +568,25 @@ service cloud.firestore {
                 link.click();
             } else { // PDF
                 const doc = new jsPDF();
-                doc.text(`Late Coming Report (${startDate} to ${endDate})`, 14, 16);
-                let startY = 22;
-                for (const className in groupedRecords) {
+                doc.text(`Late Coming Report (${startDate} to ${endDate})`, 14, 20); // Moved title down
+                let startY = 30; // Increased starting Y position
+                const sortedClasses = Object.keys(groupedRecords).sort();
+
+                for (const className of sortedClasses) {
+                    if (startY > 250) { // Add a new page if content gets too long
+                        doc.addPage();
+                        startY = 20;
+                    }
+                    doc.setFont(undefined, 'bold');
                     doc.text(className, 14, startY);
+                    doc.setFont(undefined, 'normal');
+                    
                     doc.autoTable({
-                        startY: startY + 2,
+                        startY: startY + 4, // Give space after the class name title
                         head: [['Learner Name', 'Note', 'Time']],
                         body: groupedRecords[className].sort((a,b) => (a.timestamp?.seconds || 0) - (b.timestamp?.seconds || 0)).map(r => [r.learnerName, r.note, r.timestamp ? new Date(r.timestamp.seconds * 1000).toLocaleTimeString() : 'N/A']),
                     });
-                    startY = doc.autoTable.previous.finalY + 10;
+                    startY = doc.autoTable.previous.finalY + 12; // Add more space between tables
                 }
                 doc.save(`late_list_${startDate}_to_${endDate}.pdf`);
             }
