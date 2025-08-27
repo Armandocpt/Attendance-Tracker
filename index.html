@@ -52,6 +52,7 @@
                     <nav class="flex space-x-8 px-4 sm:px-6 lg:px-8" aria-label="Tabs">
                         <button id="tab-attendance" class="tab-btn active font-medium text-lg py-4 px-1 border-b-4 border-transparent hover:border-gray-400 hover:text-gray-600 transition">Attendance Tracker</button>
                         <button id="tab-latecoming" class="tab-btn font-medium text-lg py-4 px-1 border-b-4 border-transparent hover:border-gray-400 hover:text-gray-600 transition">School Late Coming</button>
+                        <button id="tab-earlydepartures" class="tab-btn font-medium text-lg py-4 px-1 border-b-4 border-transparent hover:border-gray-400 hover:text-gray-600 transition">Early Departures</button>
                         <button id="tab-dashboard" class="tab-btn font-medium text-lg py-4 px-1 border-b-4 border-transparent hover:border-gray-400 hover:text-gray-600 transition">Dashboard</button>
                     </nav>
                 </div>
@@ -64,81 +65,20 @@
             </div>
 
             <div id="content-latecoming" class="tab-content hidden">
-                <div class="bg-white p-6 rounded-xl shadow-md mb-8 max-w-4xl mx-auto">
-                    <h2 class="text-2xl font-semibold mb-4">Record Late Learners</h2>
-                    <div class="flex flex-col sm:flex-row items-center gap-4 mb-6 bg-gray-50 p-4 rounded-lg">
-                         <label for="lateClassSelector" class="text-xl font-semibold">Select Class:</label>
-                         <select id="lateClassSelector" class="flex-grow p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 transition">
-                            <option value="">-- Loading Classes --</option>
-                         </select>
-                    </div>
-                    <div id="learnersToMarkList" class="space-y-3">
-                        <p class="text-center text-gray-500">Please select a class to see the learners.</p>
-                    </div>
-                </div>
+                <!-- Late Coming Content will be injected here -->
+            </div>
 
-                <div class="bg-white p-6 rounded-xl shadow-md mb-8 max-w-4xl mx-auto">
-                    <h2 class="text-2xl font-semibold mb-4">Daily Late Coming List</h2>
-                    <div class="flex items-center justify-center gap-4 mb-6">
-                         <h3 class="text-xl font-semibold">Date:</h3>
-                         <input type="date" id="lateListDate" class="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 transition">
-                    </div>
-                    <div id="recordedLateList" class="space-y-3">
-                        <!-- Late learners will be listed here -->
-                    </div>
-                </div>
-                 <div class="bg-white p-6 rounded-xl shadow-md mb-8 max-w-4xl mx-auto">
-                    <h2 class="text-2xl font-semibold mb-4">Download Late Coming Reports</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
-                        <div>
-                            <label for="lateReportType" class="block font-medium">Report Type</label>
-                            <select id="lateReportType" class="w-full mt-1 p-3 border rounded-lg">
-                                <option value="today">Today's List</option>
-                                <option value="week">This Week</option>
-                                <option value="month">This Month</option>
-                                <option value="range">Date Range</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label for="lateReportFormat" class="block font-medium">Format</label>
-                            <select id="lateReportFormat" class="w-full mt-1 p-3 border rounded-lg">
-                                <option value="csv">CSV (for Excel)</option>
-                                <option value="pdf">PDF</option>
-                            </select>
-                        </div>
-                        <div id="lateDateRange" class="hidden md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div><label for="lateStartDate" class="block font-medium">Start Date</label><input type="date" id="lateStartDate" class="w-full mt-1 p-3 border rounded-lg"></div>
-                            <div><label for="lateEndDate" class="block font-medium">End Date</label><input type="date" id="lateEndDate" class="w-full mt-1 p-3 border rounded-lg"></div>
-                        </div>
-                        <div class="md:col-span-2">
-                            <button id="exportLateListBtn" class="bg-blue-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-blue-700 transition w-full">Download Report</button>
-                        </div>
-                    </div>
-                </div>
+            <div id="content-earlydepartures" class="tab-content hidden">
+                <!-- Early Departures Content will be injected here -->
             </div>
             
             <div id="content-dashboard" class="tab-content hidden">
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <div class="lg:col-span-1 space-y-8">
-                        <div class="bg-white p-6 rounded-xl shadow-md">
-                            <h2 class="text-2xl font-semibold mb-4 text-gray-800">Top 10 Late Learners (This Week)</h2>
-                            <div id="top-late-week" class="space-y-3"></div>
-                        </div>
-                        <div class="bg-white p-6 rounded-xl shadow-md">
-                            <h2 class="text-2xl font-semibold mb-4 text-gray-800">Top 10 Late Learners (This Month)</h2>
-                            <div id="top-late-month" class="space-y-3"></div>
-                        </div>
-                    </div>
-                    <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-md">
-                        <h2 class="text-2xl font-semibold mb-4 text-gray-800">Late Arrivals by Day of the Week</h2>
-                        <div id="late-by-day-chart" class="mt-6 space-y-4"></div>
-                    </div>
-                </div>
+                <!-- Dashboard Content will be injected here -->
             </div>
         </main>
         
         <footer class="text-center p-4 text-gray-500 text-xs">
-            App Version: 2.18
+            App Version: 3.3
         </footer>
 
         <!-- All Modals -->
@@ -199,6 +139,7 @@
                 
                 setupPrivateTracker();
                 setupLateComingTracker();
+                setupEarlyDeparturesTracker();
                 setupDashboard();
                 setupTabLogic();
 
@@ -221,6 +162,7 @@
             const tabs = {
                 attendance: { btn: el('tab-attendance'), content: el('content-attendance'), header: true },
                 latecoming: { btn: el('tab-latecoming'), content: el('content-latecoming'), header: false },
+                earlydepartures: { btn: el('tab-earlydepartures'), content: el('content-earlydepartures'), header: false },
                 dashboard: { btn: el('tab-dashboard'), content: el('content-dashboard'), header: false }
             };
 
@@ -262,9 +204,13 @@ service cloud.firestore {
     match /classes/{classId}/{document=**} {
       allow read: if request.auth != null;
     }
-    // Rule 3: Allows reading and writing to the shared late records
+    // Rule 3: Allows reading and writing to shared late records
     match /lateRecords/{recordId} {
       allow read, write: if request.auth != null;
+    }
+    // Rule 4: Allows reading and writing to shared early departure records
+    match /earlyDepartures/{recordId} {
+        allow read, write: if request.auth != null;
     }
   }
 }`;
@@ -274,55 +220,74 @@ service cloud.firestore {
         // DASHBOARD
         // =====================================================================
         function setupDashboard() {
+            el('content-dashboard').innerHTML = `
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div class="lg:col-span-1 space-y-8">
+                        <div class="bg-white p-6 rounded-xl shadow-md">
+                            <h2 class="text-2xl font-semibold mb-4 text-gray-800">Top 10 Late Learners (This Month)</h2>
+                            <div id="top-late-month" class="space-y-3"></div>
+                        </div>
+                        <div class="bg-white p-6 rounded-xl shadow-md">
+                            <h2 class="text-2xl font-semibold mb-4 text-gray-800">Top 10 Early Departures (This Month)</h2>
+                            <div id="top-early-month" class="space-y-3"></div>
+                        </div>
+                    </div>
+                    <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-md">
+                        <h2 class="text-2xl font-semibold mb-4 text-gray-800">Incidents by Day of the Week</h2>
+                        <div id="late-by-day-chart" class="mt-6 space-y-4"></div>
+                    </div>
+                </div>
+            `;
             loadDashboardData();
         }
 
         async function loadDashboardData() {
-            const topLateWeekEl = el('top-late-week');
             const topLateMonthEl = el('top-late-month');
+            const topEarlyMonthEl = el('top-early-month');
             const lateByDayChartEl = el('late-by-day-chart');
 
-            topLateWeekEl.innerHTML = '<p>Loading...</p>';
             topLateMonthEl.innerHTML = '<p>Loading...</p>';
+            topEarlyMonthEl.innerHTML = '<p>Loading...</p>';
             lateByDayChartEl.innerHTML = '<p>Loading...</p>';
 
             const now = new Date();
             const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
-            const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay() + 1)).toISOString().slice(0, 10); // Monday as start of week
+            
+            const lateQuery = query(collection(db, 'lateRecords'), where("date", ">=", startOfMonth));
+            onSnapshot(lateQuery, (lateSnapshot) => {
+                const lateRecords = lateSnapshot.docs.map(doc => doc.data());
+                const lateCounts = lateRecords.reduce((acc, rec) => { acc[rec.learnerName] = (acc[rec.learnerName] || 0) + 1; return acc; }, {});
+                const topLate = Object.entries(lateCounts).sort((a,b) => b[1] - a[1]).slice(0, 10);
+                renderTopList(topLateMonthEl, topLate, 'month');
 
-            const q = query(collection(db, 'lateRecords'), where("date", ">=", startOfMonth));
-            onSnapshot(q, (snapshot) => {
-                const records = snapshot.docs.map(doc => doc.data());
-                
-                const monthlyCounts = records.reduce((acc, rec) => { acc[rec.learnerName] = (acc[rec.learnerName] || 0) + 1; return acc; }, {});
-                const topMonthly = Object.entries(monthlyCounts).sort((a,b) => b[1] - a[1]).slice(0, 10);
-                renderTopList(topLateMonthEl, topMonthly, 'month');
+                const earlyQuery = query(collection(db, 'earlyDepartures'), where("date", ">=", startOfMonth));
+                onSnapshot(earlyQuery, (earlySnapshot) => {
+                    const earlyRecords = earlySnapshot.docs.map(doc => doc.data());
+                    const earlyCounts = earlyRecords.reduce((acc, rec) => { acc[rec.learnerName] = (acc[rec.learnerName] || 0) + 1; return acc; }, {});
+                    const topEarly = Object.entries(earlyCounts).sort((a,b) => b[1] - a[1]).slice(0, 10);
+                    renderTopList(topEarlyMonthEl, topEarly, 'month');
 
-                const weeklyRecords = records.filter(r => r.date >= startOfWeek);
-                const weeklyCounts = weeklyRecords.reduce((acc, rec) => { acc[rec.learnerName] = (acc[rec.learnerName] || 0) + 1; return acc; }, {});
-                const topWeekly = Object.entries(weeklyCounts).sort((a,b) => b[1] - a[1]).slice(0, 10);
-                renderTopList(topLateWeekEl, topWeekly, 'week');
-
-                const dayCounts = [0, 0, 0, 0, 0]; // Mon-Fri
-                records.forEach(rec => {
-                    const day = new Date(rec.date + 'T00:00:00').getDay();
-                    if (day >= 1 && day <= 5) { dayCounts[day - 1]++; }
-                });
-                renderDayChart(lateByDayChartEl, dayCounts);
+                    const dayCounts = [0, 0, 0, 0, 0]; // Mon-Fri
+                    [...lateRecords, ...earlyRecords].forEach(rec => {
+                        const day = new Date(rec.date + 'T00:00:00').getDay();
+                        if (day >= 1 && day <= 5) { dayCounts[day - 1]++; }
+                    });
+                    renderDayChart(lateByDayChartEl, dayCounts);
+                }, (error) => { if(error.code === 'permission-denied') handlePermissionError(error, 'Dashboard Early Departures'); });
             }, (error) => {
-                if(error.code === 'permission-denied') handlePermissionError(error, 'Dashboard');
+                if(error.code === 'permission-denied') handlePermissionError(error, 'Dashboard Late Comers');
             });
         }
 
         function renderTopList(element, data, period) {
             if (data.length === 0) {
-                element.innerHTML = `<p class="text-gray-500">No late learners recorded this ${period}.</p>`;
+                element.innerHTML = `<p class="text-gray-500">No records for this ${period}.</p>`;
                 return;
             }
             element.innerHTML = data.map(([name, count]) => `
                 <div class="flex justify-between items-center bg-gray-50 p-3 rounded-md">
                     <span class="font-medium">${name}</span>
-                    <span class="font-bold text-lg text-yellow-600">${count}</span>
+                    <span class="font-bold text-lg text-gray-700">${count}</span>
                 </div>
             `).join('');
         }
@@ -336,7 +301,7 @@ service cloud.firestore {
                     <div class="flex items-center">
                         <span class="w-12 font-medium text-gray-600">${day}</span>
                         <div class="flex-grow bg-gray-200 rounded-full h-6">
-                            <div class="bg-yellow-500 h-6 rounded-full text-white text-sm flex items-center justify-end pr-2" style="width: ${percentage}%">${data[i]}</div>
+                            <div class="bg-blue-500 h-6 rounded-full text-white text-sm flex items-center justify-end pr-2" style="width: ${percentage}%">${data[i]}</div>
                         </div>
                     </div>
                 `;
@@ -345,56 +310,96 @@ service cloud.firestore {
 
 
         // =====================================================================
-        // LATE COMING TRACKER (SHARED DATA)
+        // SHARED TRACKER LOGIC (LATE COMING & EARLY DEPARTURES)
         // =====================================================================
         
-        async function setupLateComingTracker() {
-            const lateListDate = el('lateListDate');
-            const lateClassSelector = el('lateClassSelector');
-            const learnersToMarkList = el('learnersToMarkList');
-            
-            lateListDate.value = new Date().toISOString().slice(0, 10);
-            lateListDate.addEventListener('change', loadRecordedLateLearners);
-            el('exportLateListBtn').addEventListener('click', generateLateListReport);
-            el('lateReportType').addEventListener('change', (e) => {
-                el('lateDateRange').classList.toggle('hidden', e.target.value !== 'range');
-            });
-            loadRecordedLateLearners(); 
+        function setupSharedTab(tabName, collectionName, buttonText, buttonColor) {
+            const contentEl = el(`content-${tabName}`);
+            contentEl.innerHTML = `
+                <div class="bg-white p-6 rounded-xl shadow-md mb-8 max-w-4xl mx-auto">
+                    <h2 class="text-2xl font-semibold mb-4">Record ${buttonText}</h2>
+                    <div class="flex flex-col sm:flex-row items-center gap-4 mb-6 bg-gray-50 p-4 rounded-lg">
+                         <label for="${tabName}ClassSelector" class="text-xl font-semibold">Select Class:</label>
+                         <select id="${tabName}ClassSelector" class="flex-grow p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 transition">
+                            <option value="">-- Loading Classes --</option>
+                         </select>
+                    </div>
+                    <div id="${tabName}LearnersToMarkList" class="space-y-3">
+                        <p class="text-center text-gray-500">Please select a class to see the learners.</p>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md mb-8 max-w-4xl mx-auto">
+                    <h2 class="text-2xl font-semibold mb-4">Daily ${buttonText} List</h2>
+                    <div class="flex items-center justify-center gap-4 mb-6">
+                         <h3 class="text-xl font-semibold">Date:</h3>
+                         <input type="date" id="${tabName}ListDate" class="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 transition">
+                    </div>
+                    <div id="${tabName}RecordedList" class="space-y-3"></div>
+                </div>
+            `;
 
-            try {
+            const listDate = el(`${tabName}ListDate`);
+            const classSelector = el(`${tabName}ClassSelector`);
+            const learnersToMarkList = el(`${tabName}LearnersToMarkList`);
+            const recordedList = el(`${tabName}RecordedList`);
+
+            listDate.value = new Date().toISOString().slice(0, 10);
+            listDate.addEventListener('change', () => loadRecordedIncidents(collectionName, recordedList));
+            loadRecordedIncidents(collectionName, recordedList);
+
+            populateClassSelector(classSelector, (classId) => {
+                loadLearnersForSharedTab(classId, learnersToMarkList, buttonText, buttonColor);
+            });
+
+            learnersToMarkList.addEventListener('click', (e) => {
+                const container = e.target.closest('[data-learner-id]');
+                if (!container) return;
+                const { learnerId, learnerName, classId } = container.dataset;
+                if (e.target.classList.contains('mark-btn')) {
+                    const note = prompt(`Add a reason for ${learnerName}:`);
+                    if (note !== null) recordSharedIncident(collectionName, classId, learnerId, learnerName, note);
+                }
+            });
+            
+            recordedList.addEventListener('click', (e) => {
+                if (e.target.classList.contains('delete-record-btn')) {
+                    const container = e.target.closest('[data-record-id]');
+                    const { recordId } = container.dataset;
+                    showConfirmation('Are you sure you want to remove this record?', () => {
+                        deleteDoc(doc(db, collectionName, recordId)).then(() => showMessage("Record removed."));
+                    });
+                }
+            });
+        }
+        
+        async function populateClassSelector(selectorElement, onChangeCallback) {
+             try {
                 const classesCol = collection(db, 'classes');
                 const snapshot = await getDocs(classesCol);
                 
                 if (snapshot.empty) {
-                    lateClassSelector.innerHTML = '<option value="">-- No classes found --</option>';
+                    selectorElement.innerHTML = '<option value="">-- No classes found --</option>';
                     return;
                 }
 
                 const classes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a,b) => a.className.localeCompare(b.className));
-                lateClassSelector.innerHTML = '<option value="">-- Select a Class --</option>';
+                selectorElement.innerHTML = '<option value="">-- Select a Class --</option>';
                 classes.forEach(c => {
                     const option = document.createElement('option');
                     option.value = c.id;
                     option.textContent = c.className;
-                    lateClassSelector.appendChild(option);
+                    selectorElement.appendChild(option);
                 });
 
-                lateClassSelector.addEventListener('change', () => {
-                    const classId = lateClassSelector.value;
-                    if (classId) {
-                        loadLearnersForClass(classId, learnersToMarkList);
-                    } else {
-                        learnersToMarkList.innerHTML = '<p class="text-center text-gray-500">Please select a class to see the learners.</p>';
-                    }
-                });
+                selectorElement.addEventListener('change', () => onChangeCallback(selectorElement.value));
             } catch (error) {
-                if(error.code === 'permission-denied') handlePermissionError(error, 'Late Coming Class List');
+                if(error.code === 'permission-denied') handlePermissionError(error, 'Shared Class List');
                 else console.error("Error loading classes:", error);
-                lateClassSelector.innerHTML = '<option value="">-- Error Loading Classes --</option>';
+                selectorElement.innerHTML = '<option value="">-- Error Loading Classes --</option>';
             }
         }
 
-        async function loadLearnersForClass(classId, container) {
+        async function loadLearnersForSharedTab(classId, container, buttonText, buttonColor) {
             container.innerHTML = '<p class="text-center text-gray-500">Loading learners...</p>';
             try {
                 const learnersCol = collection(db, `classes/${classId}/learners`);
@@ -410,60 +415,48 @@ service cloud.firestore {
                     <div class="bg-gray-50 p-4 rounded-lg flex flex-col sm:flex-row justify-between items-center" data-learner-id="${learner.id}" data-learner-name="${learner.name}" data-class-id="${classId}">
                         <span class="font-bold text-lg mb-2 sm:mb-0">${learner.name}</span>
                         <div class="flex gap-2 w-full sm:w-auto">
-                            <button class="mark-late-btn flex-grow bg-yellow-500 text-white font-semibold py-2 px-6 rounded-lg hover:bg-yellow-600 transition">Mark as Late</button>
+                            <button class="mark-btn flex-grow ${buttonColor} text-white font-semibold py-2 px-6 rounded-lg transition">${buttonText}</button>
                         </div>
                     </div>
                 `).join('');
             } catch (error) {
-                if(error.code === 'permission-denied') handlePermissionError(error, 'Late Coming Learner List');
+                if(error.code === 'permission-denied') handlePermissionError(error, `Shared Learner List`);
                 else console.error("Error loading learners:", error);
                 container.innerHTML = '<p class="text-center text-red-500">Error loading learners.</p>';
             }
         }
-        
-        el('learnersToMarkList').addEventListener('click', (e) => {
-            const container = e.target.closest('[data-learner-id]');
-            if (!container) return;
-            const { learnerId, learnerName, classId } = container.dataset;
 
-            if (e.target.classList.contains('mark-late-btn')) {
-                const note = prompt(`Add an optional note for ${learnerName}:`);
-                if (note !== null) recordLateComing(classId, learnerId, learnerName, note);
-            }
-        });
-
-        async function recordLateComing(classId, learnerId, learnerName, note) {
-            try {
-                const lateCol = collection(db, 'lateRecords');
-                await addDoc(lateCol, { classId, learnerId, learnerName, note: note || "No note provided", date: new Date().toISOString().slice(0, 10), timestamp: serverTimestamp(), recordedBy: userId });
-                showMessage(`${learnerName} has been recorded as late.`);
+        async function recordSharedIncident(collectionName, classId, learnerId, learnerName, note) {
+             try {
+                await addDoc(collection(db, collectionName), { classId, learnerId, learnerName, note: note || "No note provided", date: new Date().toISOString().slice(0, 10), timestamp: serverTimestamp(), recordedBy: userId });
+                showMessage(`${learnerName} has been recorded.`);
             } catch (error) {
-                if(error.code === 'permission-denied') handlePermissionError(error, 'Recording Late Learner');
+                if(error.code === 'permission-denied') handlePermissionError(error, `Recording ${collectionName}`);
                 else {
-                    console.error("Error recording late coming:", error);
-                    showMessage("Failed to record late coming. Please try again.");
+                    console.error(`Error recording ${collectionName}:`, error);
+                    showMessage("Failed to record. Please try again.");
                 }
             }
         }
 
-        async function loadRecordedLateLearners() {
-            const date = el('lateListDate').value;
-            el('recordedLateList').innerHTML = '<p class="text-center text-gray-500">Loading late list...</p>';
+        async function loadRecordedIncidents(collectionName, container) {
+            const date = el(`${collectionName.replace('s', '')}ListDate`).value;
+            container.innerHTML = '<p class="text-center text-gray-500">Loading list...</p>';
 
             try {
                 const classesSnap = await getDocs(collection(db, 'classes'));
                 const classesMap = new Map(classesSnap.docs.map(doc => [doc.id, doc.data().className]));
 
-                const q = query(collection(db, 'lateRecords'), where("date", "==", date));
+                const q = query(collection(db, collectionName), where("date", "==", date));
                 onSnapshot(q, (snapshot) => {
                     if (snapshot.empty) {
-                        el('recordedLateList').innerHTML = '<p class="text-center text-gray-500">No learners were recorded late on this date.</p>';
+                        container.innerHTML = `<p class="text-center text-gray-500">No records for this date.</p>`;
                         return;
                     }
 
                     const records = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()})).sort((a,b) => (a.timestamp?.seconds || 0) - (b.timestamp?.seconds || 0));
 
-                    el('recordedLateList').innerHTML = records.map(record => {
+                    container.innerHTML = records.map(record => {
                         const className = classesMap.get(record.classId) || 'Unknown Class';
                         return `
                             <div class="bg-gray-50 p-4 rounded-lg" data-record-id="${record.id}">
@@ -472,124 +465,32 @@ service cloud.firestore {
                                         <span class="font-bold text-lg">${record.learnerName}</span>
                                         <span class="text-sm font-medium text-gray-700 ml-2">(${className})</span>
                                     </div>
-                                    <button class="delete-late-record-btn bg-red-500 text-white font-semibold py-1 px-3 rounded-lg hover:bg-red-600 transition text-xs">Delete</button>
+                                    <button class="delete-record-btn bg-red-500 text-white font-semibold py-1 px-3 rounded-lg hover:bg-red-600 transition text-xs">Delete</button>
                                 </div>
-                                ${record.note ? `<p class="text-sm text-gray-600 mt-1 pl-1 border-l-2 border-gray-300">Note: ${record.note}</p>` : ''}
+                                <p class="text-sm text-gray-600 mt-1 pl-1 border-l-2 border-gray-300">Reason: ${record.note}</p>
                             </div>
                         `;
                     }).join('');
                 }, (error) => {
-                    if(error.code === 'permission-denied') handlePermissionError(error, 'Daily Late List');
+                    if(error.code === 'permission-denied') handlePermissionError(error, `Daily ${collectionName} List`);
                     else {
-                        console.error("Error loading late records:", error);
-                        el('recordedLateList').innerHTML = '<p class="text-center text-red-500">Could not load late records.</p>';
+                        console.error(`Error loading ${collectionName} records:`, error);
+                        container.innerHTML = `<p class="text-center text-red-500">Could not load records.</p>`;
                     }
                 });
             } catch (error) {
-                if(error.code === 'permission-denied') handlePermissionError(error, 'Daily Late List Class Names');
-                else console.error("Error loading classes for late list:", error);
-                el('recordedLateList').innerHTML = '<p class="text-center text-red-500">Could not load class names.</p>';
+                if(error.code === 'permission-denied') handlePermissionError(error, `Daily ${collectionName} Class Names`);
+                else console.error(`Error loading classes for ${collectionName} list:`, error);
+                container.innerHTML = `<p class="text-center text-red-500">Could not load class names.</p>`;
             }
         }
         
-        el('recordedLateList').addEventListener('click', (e) => {
-            if (e.target.classList.contains('delete-late-record-btn')) {
-                const container = e.target.closest('[data-record-id]');
-                const { recordId } = container.dataset;
-                showConfirmation('Are you sure you want to remove this late record?', () => {
-                    deleteLateRecord(recordId);
-                });
-            }
-        });
-
-        async function deleteLateRecord(recordId) {
-            try {
-                await deleteDoc(doc(db, 'lateRecords', recordId));
-                showMessage("Late record removed successfully.");
-            } catch (error) {
-                console.error("Error removing late record:", error);
-                showMessage("Failed to remove late record.");
-            }
+        function setupLateComingTracker() {
+            setupSharedTab('latecoming', 'lateRecords', 'Mark as Late', 'bg-yellow-500 hover:bg-yellow-600');
         }
-        
-        async function generateLateListReport() {
-            const reportType = el('lateReportType').value;
-            const format = el('lateReportFormat').value;
-            let startDate, endDate;
-            const now = new Date();
 
-            if(reportType === 'today') {
-                startDate = endDate = new Date().toISOString().slice(0, 10);
-            } else if (reportType === 'week') {
-                const firstDay = new Date(now.setDate(now.getDate() - now.getDay() + 1));
-                startDate = firstDay.toISOString().slice(0, 10);
-                endDate = new Date().toISOString().slice(0, 10);
-            } else if (reportType === 'month') {
-                startDate = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
-                endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().slice(0, 10);
-            } else {
-                startDate = el('lateStartDate').value;
-                endDate = el('lateEndDate').value;
-                if (!startDate || !endDate) return showMessage("Please select a start and end date.");
-            }
-
-            const q = query(collection(db, 'lateRecords'), where("date", ">=", startDate), where("date", "<=", endDate));
-            const snapshot = await getDocs(q);
-
-            if (snapshot.empty) return showMessage("No late records found for the selected period.");
-            
-            const classesSnap = await getDocs(collection(db, 'classes'));
-            const classesMap = new Map(classesSnap.docs.map(doc => [doc.id, doc.data().className]));
-
-            const records = snapshot.docs.map(doc => doc.data());
-            
-            const groupedRecords = records.reduce((acc, record) => {
-                const className = classesMap.get(record.classId) || "Unknown Class";
-                if (!acc[className]) {
-                    acc[className] = [];
-                }
-                acc[className].push(record);
-                return acc;
-            }, {});
-
-            if (format === 'csv') {
-                let csvContent = "data:text/csv;charset=utf-8,Class,Learner Name,Note,Time\r\n";
-                for (const className in groupedRecords) {
-                    csvContent += `${className}\r\n`; // Add class name as a header
-                    groupedRecords[className].sort((a,b) => (a.timestamp?.seconds || 0) - (b.timestamp?.seconds || 0)).forEach(r => {
-                        const note = r.note ? r.note.replace(/,/g, ";") : "";
-                        const time = r.timestamp ? new Date(r.timestamp.seconds * 1000).toLocaleTimeString() : 'N/A';
-                        csvContent += `,${r.learnerName},${note},${time}\r\n`;
-                    });
-                }
-                const link = document.createElement("a");
-                link.href = encodeURI(csvContent);
-                link.download = `late_list_${startDate}_to_${endDate}.csv`;
-                link.click();
-            } else { // PDF
-                const doc = new jsPDF();
-                doc.text(`Late Coming Report (${startDate} to ${endDate})`, 14, 20); // Moved title down
-                let startY = 30; // Increased starting Y position
-                const sortedClasses = Object.keys(groupedRecords).sort();
-
-                for (const className of sortedClasses) {
-                    if (startY > 250) { // Add a new page if content gets too long
-                        doc.addPage();
-                        startY = 20;
-                    }
-                    doc.setFont(undefined, 'bold');
-                    doc.text(className, 14, startY);
-                    doc.setFont(undefined, 'normal');
-                    
-                    doc.autoTable({
-                        startY: startY + 4, // Give space after the class name title
-                        head: [['Learner Name', 'Note', 'Time']],
-                        body: groupedRecords[className].sort((a,b) => (a.timestamp?.seconds || 0) - (b.timestamp?.seconds || 0)).map(r => [r.learnerName, r.note, r.timestamp ? new Date(r.timestamp.seconds * 1000).toLocaleTimeString() : 'N/A']),
-                    });
-                    startY = doc.autoTable.previous.finalY + 12; // Add more space between tables
-                }
-                doc.save(`late_list_${startDate}_to_${endDate}.pdf`);
-            }
+        function setupEarlyDeparturesTracker() {
+            setupSharedTab('earlydepartures', 'earlyDepartures', 'Record Departure', 'bg-purple-600 hover:bg-purple-700');
         }
 
 
